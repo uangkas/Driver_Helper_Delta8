@@ -1,336 +1,940 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title> Data Uang Kas Driver Helper Delta 8</title>
+    <title>Data Uang KAS Driver Helper DELTA 8</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#007bff">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+
     <style>
-        body { background-color: #f8f9fa; padding: 10px; font-family: sans-serif; -webkit-tap-highlight-color: transparent; }
-        .judul-utama { color: #0d6efd; font-weight: bold; text-transform: uppercase; text-align: center; margin-bottom: 0; }
-        .sub-judul { color: #6c757d; font-size: 0.9rem; text-align: center; margin-bottom: 5px; }
-        #sync-status { display: block; width: fit-content; margin: 0 auto 10px auto; font-size: 0.75rem; cursor: pointer; }
-        
-        /* Tabel & Sticky */
-        .table-dark-header thead th { background-color: #343a40 !important; color: white !important; text-align: center; font-size: 0.75rem; border: 1px solid #454d55; vertical-align: middle; }
-        .name-col { position: sticky; left: 0; z-index: 10; background-color: #f0f8ff !important; width: 140px; min-width: 140px; font-weight: bold; border-right: 2px solid #dee2e6 !important; }
-        .col-aksi { width: 40px; text-align: center; cursor: pointer; font-weight: bold; color: #0d6efd; background: #fff !important; }
-        .col-rincian { background-color: #e9ecef !important; font-weight: bold; width: 80px; font-size: 0.75rem !important; text-align: center; }
-        
-        .status-ok { background-color: #d4edda !important; text-align: center; cursor: pointer; font-size: 1.1rem; width: 45px; }
-        .status-no { background-color: #f8d7da !important; text-align: center; cursor: pointer; font-size: 1.1rem; width: 45px; }
+        :root {
+            --bg-body: #0a0a0a;
+            --bg-card: #151515;
+            --text-main: #ffffff;
+            --accent-color: #d4af37;
+            --border-color: #2a2a2a;
+            --sticky-bg: #151515;
+            --gradient: linear-gradient(135deg, #bf953f, #fcf6ba, #b38728);
+            --log-bg: #151515;
+            --text-muted: #aaaaaa; 
+            --input-bg: #1a1a1a;
+            --card-inner: #1a1a1a;
+        }
 
-        .section-header { display: flex; justify-content: space-between; align-items: center; margin-top: 25px; padding-bottom: 8px; border-bottom: 2px solid #dee2e6; }
-        .section-header h5 { margin: 0; font-weight: bold; color: #495057; font-style: italic; }
-        .banner-rincian { background-color: #343a40; color: white; text-align: center; font-weight: bold; padding: 12px; border-radius: 5px; margin: 25px 0 10px 0; }
-        .box-saldo { color: white; padding: 10px; border-radius: 8px; text-align: center; font-weight: bold; font-size: 0.8rem; height: 100%; }
-        .table-responsive { overflow-x: auto; border-radius: 5px; border: 1px solid #dee2e6; margin-bottom: 20px; }
-        
-        /* Log Style Per Bulan */
-        .log-container { background: white; border-radius: 8px; border: 1px solid #dee2e6; padding: 10px; max-height: 180px; overflow-y: auto; font-size: 0.75rem; }
-        .log-item { border-bottom: 1px solid #eee; padding: 6px 0; display: flex; justify-content: space-between; align-items: flex-start; }
-        .log-time { color: #6c757d; min-width: 110px; }
+        [data-theme="emerald"] {
+            --bg-body: #05140f; --bg-card: #0a1f18; --text-main: #ffffff; --accent-color: #10b981; --border-color: #064e3b;
+            --sticky-bg: #0a1f18; --gradient: linear-gradient(135deg, #064e3b, #10b981, #065f46);
+            --log-bg: #0a1f18; --text-muted: #94a3b8; --input-bg: #0d2b22; --card-inner: #0d2b22;
+        }
 
-        /* Modal PIN Modern */
-        #modalVerifyPIN .modal-content { border: none; border-radius: 20px; box-shadow: 0 15px 35px rgba(0,0,0,0.2); background: rgba(255, 255, 255, 0.98); backdrop-filter: blur(10px); }
-        #modalVerifyPIN .modal-header { background: #0d6efd; color: white; border-radius: 20px 20px 0 0; padding: 15px; justify-content: center; }
-        .pin-input { font-size: 2.2rem !important; text-align: center; letter-spacing: 15px; font-weight: bold; border: 2px solid #dee2e6; border-radius: 15px; transition: all 0.3s ease; background: #f8f9fa; color: #0d6efd; padding: 10px 0; }
+        [data-theme="platinum"] {
+            --bg-body: #f8fafc; --bg-card: #ffffff; --text-main: #1e293b; --accent-color: #475569; --border-color: #e2e8f0;
+            --sticky-bg: #ffffff; --gradient: linear-gradient(135deg, #475569, #94a3b8, #64748b);
+            --log-bg: #ffffff; --text-muted: #64748b; --input-bg: #f1f5f9; --card-inner: #f1f5f9;
+        }
+
+        [data-theme="crystal"] {
+            --bg-body: #f0f9ff; --bg-card: #ffffff; --text-main: #0c4a6e; --accent-color: #0284c7; --border-color: #bae6fd;
+            --sticky-bg: #ffffff; --gradient: linear-gradient(135deg, #0369a1, #0ea5e9, #0284c7);
+            --log-bg: #ffffff; --text-muted: #0284c7; --input-bg: #e0f2fe; --card-inner: #e0f2fe;
+        }
+
+        * { 
+            font-family: "Times New Roman", Times, serif !important; 
+            scroll-behavior: smooth !important;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            padding: 15px;
+            overflow-x: hidden;
+            transition: 0.3s;
+            font-size: 12px !important;
+            overscroll-behavior-y: contain;
+        }
+
+        .form-control, .search-input { 
+            background-color: var(--input-bg, #1a1a1a) !important; 
+            color: var(--text-main) !important; 
+            border: 1px solid var(--accent-color) !important; 
+            font-size: 12px !important;
+        }
+
+        ::placeholder {
+            color: var(--text-muted) !important;
+            opacity: 0.8 !important;
+            font-weight: normal;
+        }
         
-        .exporting .admin-col, .exporting .btn-download-area, .exporting #sync-status, .exporting #log-section { display: none !important; }
-        #pdf-header-extra { display: none; }
-        .exporting #pdf-header-extra { display: block; text-align: center; margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; }
+        ::-webkit-input-placeholder { color: var(--text-muted) !important; opacity: 0.8 !important; }
+
+        #ptr-indicator {
+            position: fixed;
+            top: -60px;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            transition: transform 0.2s ease;
+            pointer-events: none;
+        }
+
+        .ptr-circle {
+            width: 35px;
+            height: 35px;
+            background: var(--bg-card);
+            border: 2px solid var(--accent-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            font-size: 16px;
+        }
+
+        .ptr-loading {
+            animation: rotate 1s linear infinite;
+        }
+
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        .judul-utama {
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 900;
+            text-align: center;
+            font-size: 0.85rem;
+            letter-spacing: 0px;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+
+        .nav-halaman-tabel {
+            display: flex;
+            gap: 5px;
+            margin: 10px 0 5px 0;
+            width: 100%;
+        }
+
+        .tab-btn {
+            flex: 1;
+            padding: 8px;
+            background: var(--bg-card);
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+            font-weight: 900;
+            font-size: 10px;
+            text-transform: uppercase;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .tab-btn.active {
+            background: var(--gradient);
+            color: #000;
+            border: none;
+        }
+
+        .search-container {
+            margin-bottom: 0px;
+            padding: 0 2px;
+        }
+        .search-input {
+            width: 100%;
+            border-radius: 8px;
+            padding: 10px 2px;
+            font-weight: bold;
+            outline: none;
+        }
+
+        .halaman-content {
+            display: none;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .halaman-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .table-responsive {
+            background: var(--accent-color);
+            border-radius: 12px;
+            border: 1px solid var(--accent-color);
+            margin-bottom: 15px;
+            overflow: auto;
+            max-height: 70vh;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .table {
+            margin-bottom: 0;
+            color: var(--text-main);
+            min-width: 900px;
+            white-space: nowrap;
+            border-color: var(--accent-color);
+            border-collapse: separate;
+            border-spacing: 0.5px;
+            border-radius: 6px;
+            table-layout: fixed;
+        }
+
+        .table tbody tr td {
+            background-color: var(--bg-card) !important;
+            color: var(--text-main);
+            border-radius: 6px;
+            font-size: 11px !important;
+        }
+
+        .table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 25;
+            background: var(--gradient) !important;
+            color: #000000 !important;
+            font-size: 10px !important;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: 1px solid rgba(0, 0, 0, 0.1) !important;
+            vertical-align: middle;
+            text-align: center !important;
+            border-radius: 6px !important;
+            height: 40px !important;
+            padding-top: 5px !important;
+        }
+
+        .no-col { width: 45px !important; height: 40px; position: sticky !important; left: 0; z-index: 10; background-color: var(--bg-card) !important; color: var(--text-main) !important; font-size: 11px !important; font-weight: 800; text-align: center; vertical-align: middle !important; border-radius: 7px; }
+        .name-col { width: 180px !important; position: sticky !important; left: 45px; z-index: 9; background-color: var(--accent-color) !important; color: var(--text-main) !important; font-size: 11px !important; font-weight: 700 !important; text-transform: uppercase; vertical-align: middle !important; padding-left: 12px !important; border-right: 2px solid var(--accent-color) !important; border-left: 2px solid var(--accent-color) !important; border-radius: 7px; }
+
+        .status-toggle { 
+            background: var(--accent-color); 
+            width: 60px !important; 
+            border-radius: 7px; 
+            text-align: center; 
+            vertical-align: middle; 
+            cursor: pointer; 
+            font-size: 50px !important; 
+        }
+
+        .text-center-force { 
+            font-size: 14px; 
+            color: var(--text-main) !important; 
+            text-align: center; 
+            border-radius: 6px; 
+            vertical-align: middle !important; 
+            width: 60px !important; 
+        }
+
+        thead th.no-col { z-index: 40 !important; top: 0; left: 0; background: var(--gradient) !important; }
+        thead th.name-col { z-index: 39 !important; top: 0; left: 45px; background: var(--gradient) !important; }
+
+      .panel-kontrol-utama { 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        width: 100%; 
+        padding: 0 2px;
+        margin: 0px 0 10px 0; /* Ubah 15px menjadi 0px untuk merapat ke atas */
+        gap: 10px;
+    }
+        .select-group-mini { 
+            display: flex; 
+            flex: 2.2; 
+            gap: 5px; 
+            background: transparent; 
+            padding: 0 8px; 
+            border-radius: 8px; 
+            border: 1px solid var(--accent-color); 
+            height: 38px; 
+            align-items: center;
+            justify-content: space-between;
+        }
+        .custom-select-mini { background: transparent; color: var(--accent-color); border: none; font-size: 11px; font-weight: 900; cursor: pointer; outline: none; text-transform: uppercase; }
+        #selMonth { width: 65%; } 
+        #selYear { width: 35%; text-align: right; }
+        
+        .button-group-right { display: flex; flex: 1; justify-content: flex-end; gap: 6px; }
+        .btn-luxe { 
+            color: var(--accent-color); 
+            background: transparent; 
+            font-size: 10px !important; 
+            font-weight: 900 !important; 
+            height: 38px; 
+            padding: 0 5px !important; 
+            border-radius: 8px !important; 
+            border: 1px solid var(--accent-color); 
+            letter-spacing: 0.5px; 
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+        }
+        
+        .btn-unduh-final { width: 100%; background: var(--gradient); color: #000; font-weight: 900; border: none; padding: 12px; border-radius: 8px; text-transform: uppercase; font-size: 12px; margin-bottom: 10px; }
+        .btn-hapus-final { width: 100%; background: transparent; color: #ff4d4d; border: 1px solid #ff4d4d; font-weight: bold; padding: 10px; border-radius: 8px; font-size: 11px; }
+        .label-armada { font-weight: 900; color: var(--accent-color); margin: 0; display: block; font-size: 12px; }
+        
+        #table-transaksi, #log-list-table { border-collapse: separate !important; border-spacing: 2px 2px; table-layout: fixed; width: 100%; min-width: 800px; border: none; }
+        #table-transaksi thead th, #log-list-table thead th { height: 35px !important; text-align: center !important; font-size: 10px !important; padding-top: 5px !important; position: sticky; top: 0; z-index: 10; }
+        #table-transaksi tbody td, #log-list-table tbody td { height: 20px !important; line-height: 1.1 !important; border-radius: 4px; border-bottom: 1px solid var(--accent-color) !important; padding: 2px 8px !important; font-size: 11px !important; vertical-align: middle !important; background-color: var(--bg-card) !important; white-space: nowrap !important; color: var(--text-main) !important; }
+        
+        .transaksi-scroll-area { max-height: 400px; overflow-y: auto; border-radius: 12px; background: var(--accent-color); padding: 1px; -webkit-overflow-scrolling: touch;}
+        
+        .modal-content { background: var(--bg-card); border: 2px solid var(--accent-color); color: var(--text-main); border-radius: 15px; }
+       .card-saldo { 
+            background: var(--card-inner); 
+            border: 1px solid var(--border-color); 
+            border-radius: 10px; 
+            padding: 12px 8px; 
+            text-align: center; 
+            display: flex; 
+            flex-direction: column; 
+            justify-content: center;
+            transition: 0.3s;
+        }
+        .card-saldo .label { 
+            font-size: 9px; 
+            font-weight: 900; 
+            color: var(--text-muted); 
+            text-transform: uppercase; 
+            margin-bottom: 5px; 
+        }
+        .card-saldo .value { 
+            font-size: 13px; 
+            font-weight: 900; 
+            color: var(--text-main); 
+        }
+
+        .theme-dot { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid rgba(128, 128, 128, 0.3); }
+        .theme-dot.active { border: 2px solid var(--text-main); transform: scale(1.1); box-shadow: 0 0 10px var(--accent-color); }
+        .luxe-dropdown { width: 100%; background: var(--bg-card); border: 1px solid var(--accent-color); color: var(--accent-color); padding: 12px 15px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: bold; margin-top: 15px; font-size: 12px; }
+        .luxe-content { max-height: 0; overflow: hidden; transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1); background: var(--bg-card); border-radius: 0 0 12px 12px; margin-top: -10px; }
+        .luxe-content.show { max-height: 800px; border: 1px solid var(--accent-color); border-top: none; padding: 15px 10px 10px 10px; }
+        .banner-bar { background: var(--gradient); color: #000; padding: 8px; border-radius: 8px; font-weight: 900; text-align: center; margin: 0px 0 5px 0; font-size: 12px; letter-spacing: 2px; }
+        #actionMenu { display: none; position: absolute; z-index: 99999; background: var(--bg-card); border: 1px solid var(--accent-color); border-radius: 8px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5); min-width: 110px; overflow: hidden; }
+        .menu-item { padding: 8px 15px; cursor: pointer; font-size: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-main); }
+        
+        .footer-app {
+            margin-top: 5px;
+            padding: 5px 0;
+            text-align: center;
+            border-top: 1px solid var(--border-color);
+            background: linear-gradient(to bottom, transparent 0%, var(--bg-card) 40%, var(--bg-body) 100%);
+            width: 100vw;
+            position: relative;
+            left: 50%;
+            right: 50%;
+            margin-left: -50vw;
+            margin-right: -50vw;
+        }
+
+        .footer-logo { font-weight: 900; letter-spacing: 5px; background: var(--gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 1rem; margin-bottom: 5px; text-transform: uppercase; }
+        .footer-divider { width: 80px; height: 1.5px; background: var(--gradient); margin: 2px auto; border-radius: 2px; }
+        .footer-tagline { font-size: 0.7rem; color: var(--accent-color); letter-spacing: 2px; text-transform: uppercase; font-weight: 700; margin-bottom: 1px; }
+        .footer-info { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; line-height: 1.8; max-width: 600px; margin: 0 auto; }
+        .copyright-text { margin-top: 2px; font-size: 9px; color: var(--accent-color); opacity: 0.6; letter-spacing: 1px; }
+
+        .col-aksi-center {
+            text-align: center !important;
+            vertical-align: middle !important;
+        }
+
+        .btn-aksi-trigger {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+        }
+
+         .header-tabel-flex.mt-2 {
+        margin-top: 5px !important; 
+    }
+
+    .header-tabel-flex {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 4px; /* Jarak ke tabel di bawahnya */
+        padding: 0 5px;
+    }
     </style>
 </head>
-<body>
 
-<div id="attendance-section" class="container-fluid">
-    <div class="text-center">
-        <h3 class="judul-utama">DATA UANG KAS DRIVER HELPER DELTA 8</h3>
-        <p class="sub-judul">MONITORING DATA BULANAN</p>
-        <span id="sync-status" class="badge bg-white text-muted border shadow-sm p-2 mb-2" onclick="loadFromCloud()">☁️ Memuat data...</span>
+<body data-theme="luxury">
+    <div id="ptr-indicator">
+        <div class="ptr-circle" id="ptr-icon">⬇️</div>
     </div>
 
-    <div class="section-header" style="border-bottom-color: #ffc107;">
-        <h5>DATA DRIVER</h5>
-        <div class="d-flex admin-col">
-            <button class="btn btn-warning btn-sm fw-bold me-2 shadow-sm" onclick="askPIN('catat')">➕ Catat</button>
-            <button class="btn btn-success btn-sm fw-bold shadow-sm" onclick="askPIN('tambah')">👤 Tambah</button>
-        </div>
-    </div>
-    <div class="table-responsive">
-        <table class="table table-bordered table-dark-header m-0">
-            <thead>
-                <tr><th class="name-col">NAMA</th><th>JAN</th><th>FEB</th><th>MAR</th><th>APR</th><th>MEI</th><th>JUN</th><th>JUL</th><th>AGU</th><th>SEP</th><th>OKT</th><th>NOV</th><th>DES</th><th class="col-rincian">TOTAL</th><th class="admin-col">...</th></tr>
-            </thead>
-            <tbody id="grid-driver"></tbody>
-        </table>
-    </div>
-
-    <div class="section-header" style="border-bottom-color: #198754;"><h5>DATA HELPER</h5></div>
-    <div class="table-responsive">
-        <table class="table table-bordered table-dark-header m-0">
-            <thead>
-                <tr><th class="name-col">NAMA</th><th>JAN</th><th>FEB</th><th>MAR</th><th>APR</th><th>MEI</th><th>JUN</th><th>JUL</th><th>AGU</th><th>SEP</th><th>OKT</th><th>NOV</th><th>DES</th><th class="col-rincian">TOTAL</th><th class="admin-col">...</th></tr>
-            </thead>
-            <tbody id="grid-helper"></tbody>
-        </table>
-    </div>
-</div>
-
-<div id="financial-report-section" class="container-fluid">
-    <div class="banner-rincian">RINCIAN UANG KAS DRIVER HELPER DELTA 8</div>
-    <div id="pdf-header-extra"><h4 style="margin:0">LAPORAN UANG KAS DRIVER HELPER DELTA 8</h4><p id="pdf-date-info" style="font-weight: bold; color: #555;"></p></div>
-
-    <div class="btn-download-area mb-3 text-center">
-        <button class="btn btn-danger btn-sm w-100 fw-bold shadow-sm py-2" onclick="downloadPDF()">📥 DOWNLOAD RINCIAN UANG KAS</button>
-    </div>
-
-    <div class="row g-2 mb-3 admin-col">
-        <div class="col-6"><label class="small fw-bold">Bulan:</label><select class="form-select shadow-sm" id="selMonth" onchange="render()"></select></div>
-        <div class="col-6"><label class="small fw-bold">Tahun:</label><select class="form-select shadow-sm" id="selYear" onchange="render()"></select></div>
-    </div>
-
-    <div class="row g-2 mb-4">
-        <div class="col-6"><div class="box-saldo bg-secondary">SALDO AWAL<br><span id="s-awal">Rp 0</span></div></div>
-        <div class="col-6"><div class="box-saldo bg-info text-dark">SALDO AKHIR<br><span id="s-akhir">Rp 0</span></div></div>
-        <div class="col-4"><div class="box-saldo bg-success">MASUK<br><span id="in">Rp 0</span></div></div>
-        <div class="col-4"><div class="box-saldo bg-danger">KELUAR<br><span id="out">Rp 0</span></div></div>
-        <div class="col-4"><div class="box-saldo bg-primary">TOTAL KAS<br><span id="bal">Rp 0</span></div></div>
-    </div>
-
-    <h5 class="text-center fw-bold mb-3" style="color:#6c757d">RIWAYAT TRANSAKSI</h5>
-    <div class="table-responsive shadow-sm mb-4">
-        <table class="table table-bordered table-striped m-0 text-center small">
-            <thead class="table-primary"><tr><th>TANGGAL</th><th>TIPE</th><th>PENERIMA/SUMBER</th><th>KETERANGAN</th><th>NOMINAL</th><th class="admin-col">...</th></tr></thead>
-            <tbody id="hist"></tbody>
-        </table>
-    </div>
-</div>
-
-<div id="log-section" class="container-fluid mb-5">
-    <h6 class="fw-bold text-muted">🕒 LOG AKTIVITAS</h6>
-    <div class="log-container shadow-sm" id="log-list"></div>
-</div>
-
-<div class="modal fade" id="modalVerifyPIN" tabindex="-1" data-bs-backdrop="static">
-    <div class="modal-dialog modal-dialog-centered modal-sm">
-        <div class="modal-content">
-            <div class="modal-header border-0 pb-0 text-center w-100"><b class="w-100 text-white">🔒 VERIFIKASI AKSES</b></div>
-            <div class="modal-body text-center">
-                <p class="text-muted small mb-3">Masukkan 4 Digit PIN Keamanan</p>
-                <input type="password" id="inputPIN" class="form-control pin-input mb-2" inputmode="numeric" maxlength="4" oninput="handlePinInput(this)" placeholder="••••">
-            </div>
-            <div class="modal-footer border-0 pt-0 d-flex justify-content-center">
-                <button class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Batal</button>
-                <button class="btn btn-primary btn-sm px-4" onclick="checkPIN()">Lanjut</button>
+    <div class="container-fluid" id="app-content">
+        <div id="header-section" class="text-center pt-4 pb-1">
+            <h3 class="judul-utama">DATA UANG KAS DRIVER HELPER DELTA 8</h3>
+            <p id="sync-status" class="small fw-bold" style="color: var(--text-muted); letter-spacing: 3px; margin: 0; font-size: 10px;">☁️ MENGHUBUNGKAN...</p>
+            <div class="theme-container d-flex justify-content-center gap-3 mt-3">
+                <div id="dot-luxury" class="theme-dot active" style="background: #d4af37;" onclick="setTheme('luxury')"></div>
+                <div id="dot-emerald" class="theme-dot" style="background: #10b981;" onclick="setTheme('emerald')"></div>
+                <div id="dot-platinum" class="theme-dot" style="background: #64748b;" onclick="setTheme('platinum')"></div>
+                <div id="dot-crystal" class="theme-dot" style="background: #0ea5e9;" onclick="setTheme('crystal')"></div>
             </div>
         </div>
+
+        <div id="fleet-area">
+            <div class="nav-halaman-tabel">
+                <button class="tab-btn active" id="btn-driver" onclick="pindahHalaman('hal-driver', this)">HALAMAN DRIVER</button>
+                <button class="tab-btn" id="btn-helper" onclick="pindahHalaman('hal-helper', this)">HALAMAN HELPER</button>
+                <button class="tab-btn" id="btn-finance" style="border: 1px solid var(--accent-color);" onclick="pindahHalaman('hal-finance', this)">💰 LAPORAN KEUANGAN</button>
+            </div>
+
+            <div class="search-container" id="search-bar-wrapper">
+                <input type="text" id="memberSearch" class="search-input" placeholder="Cari Nama Anggota Di Sini..." onkeyup="render()">
+            </div>
+
+            <div id="hal-driver" class="halaman-content active">
+                <div class="header-tabel-flex mt-2">
+                    <h6 class="label-armada">| DATA DRIVER</h6>
+                    <button class="btn-luxe" onclick="askAuth('tambah')">+ ANGGOTA</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th class="no-col">NO</th><th class="name-col">NAMA ANGGOTA</th>
+                                <th>JAN</th><th>FEB</th><th>MAR</th><th>APR</th><th>MEI</th><th>JUN</th>
+                                <th>JUL</th><th>AGU</th><th>SEP</th><th>OKT</th><th>NOV</th><th>DES</th>
+                                <th class="text-center-force">TOTAL</th><th class="text-center-force">AKSI</th>
+                            </tr>
+                        </thead>
+                        <tbody id="grid-driver"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="hal-helper" class="halaman-content">
+                <div class="header-tabel-flex mt-2">
+                    <h6 class="label-armada px-1">| DATA HELPER</h6>
+                    <button class="btn-luxe" onclick="askAuth('tambah')">+ ANGGOTA</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th class="no-col">NO</th><th class="name-col">NAMA ANGGOTA</th>
+                                <th>JAN</th><th>FEB</th><th>MAR</th><th>APR</th><th>MEI</th><th>JUN</th>
+                                <th>JUL</th><th>AGU</th><th>SEP</th><th>OKT</th><th>NOV</th><th>DES</th>
+                                <th class="text-center-force">TOTAL</th><th class="text-center-force">AKSI</th>
+                            </tr>
+                        </thead>
+                        <tbody id="grid-helper"></tbody>
+                    </table>
+                </div>
+            </div>
+
+<div id="hal-finance" class="halaman-content">
+    <div class="panel-kontrol-utama">
+        <div class="select-group-mini">
+            <select id="selMonth" class="custom-select-mini" onchange="render()"></select>
+            <span style="color: var(--accent-color); opacity: 0.5;">|</span>
+            <select id="selYear" class="custom-select-mini" onchange="render()"></select>
+        </div>
+        <div class="button-group-right">
+            <button class="btn-luxe" onclick="askAuth('catat')">+ TRANSAKSI</button>
+        </div>
     </div>
-</div>
 
-<div class="modal fade" id="modalMenu" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-sm"><div class="modal-content"><div class="modal-body p-0"><div class="list-group list-group-flush text-center"><div class="list-group-item fw-bold text-muted bg-light" id="menuLabel"></div><button class="list-group-item list-group-item-action py-3 text-primary fw-bold" onclick="askPIN('edit')">✏️ EDIT DATA</button><button class="list-group-item list-group-item-action py-3 text-danger fw-bold" onclick="askPIN('hapus')">🗑️ HAPUS DATA</button><button class="list-group-item list-group-item-action py-3" data-bs-dismiss="modal">Batal</button></div></div></div></div></div>
-<div class="modal fade" id="modalTambah" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><form id="fAdd"><div class="modal-header"><b>Tambah Anggota</b></div><div class="modal-body"><input type="text" id="n" class="form-control mb-2" placeholder="Nama" required><select id="k" class="form-select"><option value="Driver">Driver</option><option value="Helper">Helper</option></select></div><div class="modal-footer"><button type="submit" class="btn btn-primary w-100">SIMPAN</button></div></form></div></div></div>
-<div class="modal fade" id="modalCatat" tabindex="-1"><div class="modal-dialog"><div class="modal-content"><form id="fTrans"><div class="modal-header"><b>Catat Transaksi</b></div><div class="modal-body"><select name="tp" class="form-select mb-2"><option value="Pemasukan">Pemasukan</option><option value="Pengeluaran">Pengeluaran</option></select><input type="date" name="d" class="form-control mb-2" required><input type="text" name="p" class="form-control mb-2" placeholder="Penerima / Sumber" required><input type="text" name="k" class="form-control mb-2" placeholder="Keterangan" required><input type="number" name="v" class="form-control" required></div><div class="modal-footer"><button type="submit" class="btn btn-warning w-100">SIMPAN</button></div></form></div></div></div>
-<div class="modal fade" id="modalEditTrans" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><b>Edit Transaksi</b></div><div class="modal-body"><select id="etTp" class="form-select mb-2"><option value="Pemasukan">Pemasukan</option><option value="Pengeluaran">Pengeluaran</option></select><input type="date" id="etD" class="form-control mb-2"><input type="text" id="etP" class="form-control mb-2" placeholder="Penerima / Sumber"><input type="text" id="etK" class="form-control mb-2" placeholder="Keterangan"><input type="number" id="etV" class="form-control"></div><div class="modal-footer"><button class="btn btn-warning w-100" onclick="saveEditTrans()">UPDATE</button></div></div></div></div>
-<div class="modal fade" id="modalEditAnggota" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><b>Edit Anggota</b></div><div class="modal-body"><label class="small fw-bold">Nama:</label><input type="text" id="eName" class="form-control mb-2"><label class="small fw-bold">Kategori:</label><select id="eKat" class="form-select"><option value="Driver">Driver</option><option value="Helper">Helper</option></select></div><div class="modal-footer"><button class="btn btn-primary w-100" onclick="saveEditAnggota()">SIMPAN</button></div></div></div></div>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    // MASUKKAN URL WEB APP GOOGLE SCRIPT ANDA DI SINI
-    const CLOUD_URL = 'https://script.google.com/macros/s/AKfycbzWcCXVCB5SIWqFNF3VDqqGyF5MeIN7YVOFnrOzyMzyZ00sdMUBK2-35cjdzqCF5Ow3uA/exec'; 
-    const APP_PIN = "0000"; 
+    <div class="banner-bar">LAPORAN KEUANGAN <span id="label-periode-laporan">BULANAN</span></div>
     
-    let DB_DRIVER = [], DB_HELPER = [], DB_TRANSAKSI = [], DB_LOGS = [], nextId = 1;
-    let currentSelection = null, pendingAction = null, pendingParams = null;
+    <div id="financial-area">
+        <div class="row g-2 mb-2">
+            <div class="col-12">
+                <div class="card-saldo">
+                    <div class="label">Saldo Awal</div>
+                    <div id="s-awal" class="value">Rp 0</div>
+                </div>
+            </div>
+        </div>
 
-    function askPIN(actionType, params = null) {
-        pendingAction = actionType; pendingParams = params;
-        document.getElementById('inputPIN').value = "";
-        bootstrap.Modal.getOrCreateInstance(document.getElementById('modalVerifyPIN')).show();
-        setTimeout(() => document.getElementById('inputPIN').focus(), 500);
-    }
-    function handlePinInput(el) { if (el.value.length === 4) checkPIN(); }
-    function checkPIN() {
-        const inputEl = document.getElementById('inputPIN');
-        if (inputEl.value === APP_PIN) {
-            bootstrap.Modal.getInstance(document.getElementById('modalVerifyPIN')).hide();
-            executePendingAction();
-        } else if (inputEl.value.length === 4) {
-            alert("⚠️ PIN SALAH!"); inputEl.value = ""; inputEl.focus();
-        }
-    }
-    function executePendingAction() {
-        if (pendingAction === 'tambah') new bootstrap.Modal(document.getElementById('modalTambah')).show();
-        if (pendingAction === 'catat') new bootstrap.Modal(document.getElementById('modalCatat')).show();
-        if (pendingAction === 'edit') handleEdit();
-        if (pendingAction === 'hapus') handleHapus();
-        if (pendingAction === 'toggle') processToggle(pendingParams.id, pendingParams.kat, pendingParams.y, pendingParams.m);
-        pendingAction = null; pendingParams = null;
-    }
+        <div class="row g-2 mb-2">
+            <div class="col-4">
+                <div class="card-saldo">
+                    <div class="label">Iuran (+)</div>
+                    <div id="in" class="value text-success">Rp 0</div>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="card-saldo">
+                    <div class="label">Keluar (-)</div>
+                    <div id="out" class="value text-danger">Rp 0</div>
+                </div>
+            </div>
+            <div class="col-4">
+                <div class="card-saldo">
+                    <div class="label">Lainnya (+/-)</div>
+                    <div id="bal" class="value">Rp 0</div>
+                </div>
+            </div>
+        </div>
 
-    function addLog(msg) {
-        const now = new Date();
-        const timeStr = now.toLocaleDateString('id-ID') + " " + now.toLocaleTimeString('id-ID', {hour: '2-digit', minute:'2-digit'});
-        DB_LOGS.unshift({ time: timeStr, msg: msg });
-        if(DB_LOGS.length > 1000) DB_LOGS.pop();
+        <div class="row g-2 mb-4">
+            <div class="col-12">
+                <div class="card-saldo" style="border: 2px solid var(--accent-color); background: rgba(212, 175, 55, 0.1);">
+                    <div class="label" style="color: var(--accent-color); font-size: 11px;">SALDO AKHIR (TOTAL)</div>
+                    <div id="s-akhir" class="value" style="font-size: 18px; color: var(--accent-color);">Rp 0</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="transaksi-scroll-area mb-4">
+            <table class="table" id="table-transaksi">
+                <thead>
+                    <tr>
+                        <th style="width: 85px;">TANGGAL</th><th style="width: 120px;">TIPE</th><th style="width: 200px;">SUMBER/PENERIMA</th>
+                        <th style="width: 210px;">KETERANGAN</th><th style="width: 120px;">NOMINAL</th><th style="width: 45px;">AKSI</th>
+                    </tr>
+                </thead>
+                <tbody id="hist"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div id="system-area">
+        <div class="luxe-dropdown" onclick="toggleCol('log-col')"><span>🕒 LOG AKTIVITAS SISTEM</span><span id="log-icon">▼</span></div>
+        <div id="log-col" class="luxe-content">
+            <div class="table-responsive" style="max-height: 300px;">
+                <table class="table" id="log-list-table">
+                    <thead><tr><th style="width: 100px;">WAKTU</th><th style="width: 100px;">EDITOR</th><th style="width: 120px;">AKSI</th><th>KETERANGAN</th></tr></thead>
+                    <tbody id="log-list"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="luxe-dropdown" onclick="toggleCol('export-col')"><span>📤 DOWNLOAD PDF & HAPUS LOG</span><span id="export-icon">▼</span></div>
+        <div id="export-col" class="luxe-content">
+            <button class="btn-unduh-final" onclick="askAuth('download')">📥 UNDUH LAPORAN PDF</button>
+            <button class="btn-hapus-final" onclick="clearLogs()">HAPUS SEMUA LOG SISTEM</button>
+        </div>
+    </div>
+</div>
+
+        <footer class="footer-app">
+            <div class="footer-logo">DRIVER HELPER DELTA 8</div>
+            <div class="footer-tagline">Excellence in Logistics</div>
+            <div class="footer-divider"></div>
+            <div class="footer-info">Sistem Manajemen Uang KAS Driver Helper</div>
+            <div class="copyright-text">&copy; 2026 ALL MANAGEMENT MEMBERS.</div>
+            <div style="margin-top: 10px;">
+                <strong style="font-size: 8px; color: var(--accent-color); letter-spacing: 2px;">
+                    ---<{SUPPORTED BY : MANCUNG_168}>---
+                </strong>
+            </div>
+        </footer>
+    </div>
+
+    <div id="actionMenu">
+        <div class="menu-item p-2 px-3" onclick="doEdit()">✏️ Edit</div>
+        <div class="menu-item p-2 px-3 text-danger" onclick="doDelete()">🗑️ Hapus</div>
+    </div>
+
+    <div class="modal fade" id="modalVerifyAuth" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-body p-4 text-center"><h6 class="fw-bold mb-3">VERIFIKASI OTORITAS</h6><input type="text" id="inputEditorName" class="form-control mb-2 text-center" placeholder="Nama Editor"><input type="password" id="inputPIN" class="form-control mb-3 text-center" maxlength="4" placeholder="PIN" inputmode="numeric" pattern="[0-9]*" oninput="checkAuth()"></div></div></div></div>
+
+    <div class="modal fade" id="modalCatat" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-body"><h6 class="fw-bold mb-3">CATAT TRANSAKSI</h6><form id="fTrans"><input type="hidden" id="editTransIdx"><select name="tp" id="trans_type" class="form-select mb-2"><option value="Pemasukan">Pemasukan</option><option value="Pengeluaran" selected>Pengeluaran</option></select><input type="date" name="d" id="trans_date" class="form-control mb-2" required><input type="text" name="p" id="trans_source" class="form-control mb-2" placeholder="Sumber/Penerima"><input type="text" name="k" id="trans_ket" class="form-control mb-2" placeholder="Keterangan"><input type="number" name="v" id="trans_val" class="form-control mb-3" placeholder="Nominal" required><button type="submit" class="btn btn-warning w-100 fw-bold">SIMPAN</button></form></div></div></div></div>
+    <div class="modal fade" id="modalTambah" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-body"><h6 class="fw-bold mb-3">TAMBAH/EDIT ANGGOTA</h6><form id="fAdd"><input type="hidden" id="editMemberId"><textarea id="n" class="form-control mb-2" style="height:100px" placeholder="Nama-nama Anggota (Bisa tulis banyak pisahkan dengan enter)"></textarea><select id="k" class="form-select mb-3"><option value="Driver">Driver</option><option value="Helper">Helper</option></select><button type="submit" class="btn btn-warning w-100 fw-bold">SIMPAN</button></form></div></div></div></div>
+    
+    <div class="modal fade" id="modalKonfirmasiHapus" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-sm"><div class="modal-content"><div class="modal-body p-4 text-center"><div class="mb-3" style="font-size: 2rem;">⚠️</div><h6 class="fw-bold mb-4">Hapus data ini?</h6><div class="d-flex gap-2"><button type="button" class="btn btn-dark w-100" data-bs-dismiss="modal">BATAL</button><button type="button" class="btn btn-danger w-100" onclick="eksekusiHapus()">HAPUS</button></div></div></div></div></div>
+    <div class="modal fade" id="modalKonfirmasiLog" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-sm"><div class="modal-content"><div class="modal-body p-4 text-center"><div class="mb-3" style="font-size: 2rem;">🗑️</div><h6 class="fw-bold mb-4">BERSIHKAN LOG?</h6><div class="d-flex gap-2"><button type="button" class="btn btn-dark w-100" data-bs-dismiss="modal">BATAL</button><button type="button" class="btn btn-danger w-100" onclick="eksekusiHapusLog()">HAPUS</button></div></div></div></div></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const CLOUD_URL = 'https://script.google.com/macros/s/AKfycbxO_XZ-6zPgXOEC_vp_lba0jezpftJ1-zYVw6FL6h18zJlEK3sv8qK-3ueSl8mQ6sE/exec';
+        const APP_PIN = "0000";
+        let DB_DRIVER = [], DB_HELPER = [], DB_TRANSAKSI = [], DB_LOGS = [];
+        let pendingAction = null, pendingParams = null, currentContext = { type: '', id: null, idx: null };
+        
+        // Registrasi Service Worker di GitHub Pages
+if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js')
+        .then(() => console.log('Service Worker Active'))
+        .catch(err => console.error('Service Worker Error', err));
+}
+
+// Meminta Izin
+function askPermission() {
+    if (Notification.permission !== "granted") {
+        Notification.requestPermission();
     }
+}
+window.addEventListener('DOMContentLoaded', askPermission);
 
-    async function loadFromCloud() {
-        const st = document.getElementById('sync-status');
-        st.innerText = "☁️ Menghubungkan...";
-        try {
-            const res = await fetch(CLOUD_URL + "?action=read");
-            const data = await res.json();
-            if(data) {
-                DB_DRIVER = data.driver || []; DB_HELPER = data.helper || [];
-                DB_TRANSAKSI = data.transaksi || []; DB_LOGS = data.logs || [];
-                nextId = Math.max(...[...DB_DRIVER, ...DB_HELPER].map(x=>x.id), 0) + 1;
-                saveLocal(); render();
-                st.innerText = "☁️ Status: ✅ Data Terkini";
-            }
-        } catch (e) { st.innerText = "☁️ Status: ❌ Mode Offline"; }
-    }
-
-    async function syncAll() {
-        saveLocal();
-        const st = document.getElementById('sync-status');
-        try {
-            const payload = { driver: DB_DRIVER, helper: DB_HELPER, transaksi: DB_TRANSAKSI, logs: DB_LOGS };
-            await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(payload) });
-            st.innerText = "☁️ Status: ✅ Sinkron";
-        } catch (e) { st.innerText = "☁️ Status: ❌ Gagal Sinkron"; }
-    }
-
-    function saveLocal() {
-        localStorage.setItem('D8_DB_FINAL', JSON.stringify({driver:DB_DRIVER, helper:DB_HELPER, transaksi:DB_TRANSAKSI, logs:DB_LOGS, nextId}));
-    }
-
-    function render() {
-        const gd = document.getElementById('grid-driver'), gh = document.getElementById('grid-helper'), hi = document.getElementById('hist'), lg = document.getElementById('log-list');
-        gd.innerHTML = gh.innerHTML = hi.innerHTML = lg.innerHTML = '';
-        const m = parseInt(document.getElementById('selMonth').value), y = parseInt(document.getElementById('selYear').value);
-        let sAwal = calculatePastBalance(m, y), cIn = 0, cOut = 0;
-
-        const draw = (list, target, kat) => {
-            list.forEach(p => {
-                let lunasCount = 0, row = `<td class="name-col">${p.nama}</td>`;
-                for(let i=1; i<=12; i++) {
-                    let s = p.status?.[y]?.[i] || false;
-                    if(s) { lunasCount++; if(i === m) cIn += 25000; }
-                    row += `<td class="${s?'status-ok':'status-no'}" onclick="askPIN('toggle', {id:${p.id}, kat:'${kat}', y:${y}, m:${i}})">${s?'✅':'❌'}</td>`;
-                }
-                row += `<td class="col-rincian">${lunasCount}/12</td><td class="col-aksi admin-col" onclick="askAction(${p.id},'${kat}','${p.nama}')">⋮</td>`;
-                let tr = document.createElement('tr'); tr.innerHTML = row; target.appendChild(tr);
+// Fungsi Kirim Notif
+function notifyUser(title, body) {
+    if (Notification.permission === 'granted') {
+        navigator.serviceWorker.ready.then(reg => {
+            reg.showNotification(title, {
+                body: body,
+                icon: 'https://cdn-icons-png.flaticon.com/512/1828/1828640.png',
+                vibrate: [100, 50, 100]
             });
-        };
-        draw(DB_DRIVER, gd, 'Driver'); draw(DB_HELPER, gh, 'Helper');
-
-        DB_TRANSAKSI.filter(x => { let d = new Date(x.d); return d.getFullYear() === y && (d.getMonth() + 1) === m;
-        }).forEach((x, idx) => {
-            if(x.tp === 'Pemasukan') cIn += x.v; else cOut += x.v;
-            hi.innerHTML += `<tr><td>${x.d}</td><td>${x.tp}</td><td>${x.p}</td><td>${x.k}</td><td>Rp ${x.v.toLocaleString()}</td><td class="col-aksi admin-col" onclick="askAction(${idx},'Transaksi','${x.k}')">⋮</td></tr>`;
         });
-
-        const selM = m.toString().padStart(2, '0'), selY = y.toString();
-        const filteredLogs = DB_LOGS.filter(l => l.time.includes(`/${selM}/${selY}`));
-        filteredLogs.forEach(l => lg.innerHTML += `<div class="log-item"><span class="log-time">${l.time}</span><span class="log-msg">${l.msg}</span></div>`);
-        if(!filteredLogs.length) lg.innerHTML = '<div class="text-center text-muted py-3 small">Tidak ada aktivitas bulan ini.</div>';
-
-        document.getElementById('s-awal').innerText = "Rp " + sAwal.toLocaleString('id-ID');
-        document.getElementById('in').innerText = "Rp " + cIn.toLocaleString('id-ID');
-        document.getElementById('out').innerText = "Rp " + cOut.toLocaleString('id-ID');
-        document.getElementById('bal').innerText = "Rp " + (sAwal + cIn - cOut).toLocaleString('id-ID');
-        document.getElementById('s-akhir').innerText = "Rp " + (sAwal + cIn - cOut).toLocaleString('id-ID');
     }
+}
 
-    function calculatePastBalance(m, y) {
-        let totalIn = 0, totalOut = 0;
-        [...DB_DRIVER, ...DB_HELPER].forEach(p => { if(p.status) Object.keys(p.status).forEach(sy => { Object.keys(p.status[sy]).forEach(sm => { if (parseInt(sy) < y || (parseInt(sy) == y && parseInt(sm) < m)) if(p.status[sy][sm]) totalIn += 25000; }); }); });
-        DB_TRANSAKSI.forEach(x => { let d = new Date(x.d); if (d.getFullYear() < y || (d.getFullYear() == y && (d.getMonth() + 1) < m)) if(x.tp === 'Pemasukan') totalIn += x.v; else totalOut += x.v; });
-        return totalIn - totalOut;
-    }
+// Cek Log Baru dari User Lain
+let lastSeenLog = null;
+async function fetchNewLogs() {
+    try {
+        const response = await fetch(CLOUD_URL + "?action=read");
+        const data = await response.json();
+        const logs = data.logs || [];
+        
+        if (logs.length > 0) {
+            const topLog = logs[0];
+            const myName = localStorage.getItem('delta8_editor');
 
-    function processToggle(id, kat, y, m) {
-        let p = (kat === 'Driver' ? DB_DRIVER : DB_HELPER).find(x => x.id === id);
-        if(!p.status) p.status = {}; if(!p.status[y]) p.status[y] = {};
-        p.status[y][m] = !p.status[y][m];
-        addLog(`Iuran ${p.nama} (${m}/${y}) -> ${p.status[y][m]?'Lunas':'❌'}`);
-        syncAll(); render();
-    }
-
-    document.getElementById('fAdd').onsubmit = (e) => {
-        e.preventDefault();
-        let p = { id: nextId++, nama: document.getElementById('n').value, status: {} };
-        if(document.getElementById('k').value === 'Driver') DB_DRIVER.push(p); else DB_HELPER.push(p);
-        addLog(`➕ Anggota: ${p.nama}`); syncAll(); render(); e.target.reset(); bootstrap.Modal.getInstance(document.getElementById('modalTambah')).hide();
-    };
-
-    document.getElementById('fTrans').onsubmit = (e) => {
-        e.preventDefault();
-        const f = new FormData(e.target);
-        const tp = f.get('tp'), p = f.get('p'), k = f.get('k'), v = parseInt(f.get('v'));
-        DB_TRANSAKSI.push({ tp, d: f.get('d'), p, k, v });
-        addLog(`💰 [${tp}] Penerima/Sumber: ${p} | Ket: ${k} (Rp ${v.toLocaleString()})`); 
-        syncAll(); render(); e.target.reset(); bootstrap.Modal.getInstance(document.getElementById('modalCatat')).hide();
-    };
-
-    function askAction(id, tipe, label) { currentSelection = { id, tipe, label }; document.getElementById('menuLabel').innerText = label; new bootstrap.Modal(document.getElementById('modalMenu')).show(); }
-
-    function handleEdit() {
-        bootstrap.Modal.getInstance(document.getElementById('modalMenu')).hide();
-        if(currentSelection.tipe === 'Transaksi') {
-            let t = DB_TRANSAKSI[currentSelection.id];
-            document.getElementById('etTp').value = t.tp; document.getElementById('etD').value = t.d; document.getElementById('etP').value = t.p; document.getElementById('etK').value = t.k; document.getElementById('etV').value = t.v;
-            new bootstrap.Modal(document.getElementById('modalEditTrans')).show();
-        } else {
-            let p = (currentSelection.tipe === 'Driver' ? DB_DRIVER : DB_HELPER).find(x => x.id === currentSelection.id);
-            document.getElementById('eName').value = p.nama; document.getElementById('eKat').value = currentSelection.tipe;
-            new bootstrap.Modal(document.getElementById('modalEditAnggota')).show();
+            // Syarat Notif: Log baru terdeteksi DAN bukan buatan saya sendiri
+            if (lastSeenLog && topLog.time !== lastSeenLog && topLog.editor !== myName) {
+                notifyUser("AKTIVITAS DELTA 8", `${topLog.editor}: ${topLog.aksi} - ${topLog.ket}`);
+            }
+            lastSeenLog = topLog.time;
         }
+    } catch (e) {
+        console.error("Gagal sinkron log");
     }
+}
 
-    function saveEditAnggota() {
-        let nKat = document.getElementById('eKat').value, oldList = currentSelection.tipe === 'Driver' ? DB_DRIVER : DB_HELPER;
-        let idx = oldList.findIndex(x => x.id === currentSelection.id);
-        addLog(`✏️ Edit Anggota: ${oldList[idx].nama}`);
-        oldList[idx].nama = document.getElementById('eName').value;
-        if(nKat !== currentSelection.tipe) { let data = oldList.splice(idx, 1)[0]; if(nKat === 'Driver') DB_DRIVER.push(data); else DB_HELPER.push(data); }
-        syncAll(); render(); bootstrap.Modal.getInstance(document.getElementById('modalEditAnggota')).hide();
-    }
+// Jalankan pengecekan setiap 20 detik
+setInterval(fetchNewLogs, 20000);
 
-    function saveEditTrans() {
-        let t = DB_TRANSAKSI[currentSelection.id];
-        addLog(`✏️ Edit Trans: [${document.getElementById('etTp').value}] Penerima/Sumber: ${document.getElementById('etP').value} | Ket: ${document.getElementById('etK').value}`);
-        t.tp = document.getElementById('etTp').value; t.d = document.getElementById('etD').value; t.p = document.getElementById('etP').value; t.k = document.getElementById('etK').value; t.v = parseInt(document.getElementById('etV').value);
-        syncAll(); render(); bootstrap.Modal.getInstance(document.getElementById('modalEditTrans')).hide();
-    }
 
-    function handleHapus() {
-        addLog(`🗑️ Hapus: ${currentSelection.label}`);
-        if(currentSelection.tipe === 'Transaksi') DB_TRANSAKSI.splice(currentSelection.id, 1);
-        else if(currentSelection.tipe === 'Driver') DB_DRIVER = DB_DRIVER.filter(x => x.id !== currentSelection.id);
-        else DB_HELPER = DB_HELPER.filter(x => x.id !== currentSelection.id);
-        syncAll(); render(); bootstrap.Modal.getInstance(document.getElementById('modalMenu')).hide();
-    }
+        function pindahHalaman(idHal, btn) {
+            document.querySelectorAll('.halaman-content').forEach(h => h.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById(idHal).classList.add('active');
+            btn.classList.add('active');
+            
+            const searchBar = document.getElementById('search-bar-wrapper');
+            if (idHal === 'hal-finance') {
+                searchBar.style.display = 'none';
+            } else {
+                searchBar.style.display = 'block';
+            }
+        }
 
-    function downloadPDF() {
-        const element = document.getElementById('financial-report-section');
-        const bulan = document.getElementById('selMonth').options[document.getElementById('selMonth').selectedIndex].text;
-        document.getElementById('pdf-date-info').innerText = `Periode: ${bulan} ${document.getElementById('selYear').value}`;
-        document.body.classList.add('exporting');
-        html2pdf().set({ margin: 10, filename: `Lap_Kas_Delta8_${bulan}.pdf`, html2canvas: { scale: 2 }, jsPDF: { format: 'a4', orientation: 'portrait' } }).from(element).save().then(() => { document.body.classList.remove('exporting'); });
-    }
+        function setTheme(t) { document.body.setAttribute('data-theme', t); localStorage.setItem('delta8_theme', t); document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active')); if (document.getElementById('dot-' + t)) document.getElementById('dot-' + t).classList.add('active'); }
+        function toggleCol(id) { const el = document.getElementById(id); el.classList.toggle('show'); document.getElementById(id.split('-')[0] + '-icon').innerText = el.classList.contains('show') ? '▲' : '▼'; }
 
-    window.onload = () => {
-        const sm = document.getElementById('selMonth'), sy = document.getElementById('selYear'), now = new Date();
-        const names = ["","Januari","Februari","Maret","April","Mei","Juni","Juli","Agustus","September","Oktober","November","Desember"];
-        for(let i=1; i<=12; i++) sm.innerHTML += `<option value="${i}" ${i===(now.getMonth()+1)?'selected':''}>${names[i]}</option>`;
-        for(let i=2024; i<=2050; i++) sy.innerHTML += `<option value="${i}" ${i===now.getFullYear()?'selected':''}>${i}</option>`;
-        let saved = JSON.parse(localStorage.getItem('D8_DB_FINAL'));
-        if(saved) { DB_DRIVER=saved.driver; DB_HELPER=saved.helper; DB_TRANSAKSI=saved.transaksi; DB_LOGS=saved.logs; nextId=saved.nextId; render(); }
-        loadFromCloud();
-    };
-</script>
+        window.onclick = function(e) {
+            const menu = document.getElementById('actionMenu');
+            const btn = e.target.closest('.btn-aksi-trigger');
+            if (btn) {
+                const rect = btn.getBoundingClientRect();
+                currentContext = { type: btn.dataset.type, id: btn.dataset.id || null, idx: btn.dataset.idx || null };
+                menu.style.display = 'block'; menu.style.top = (rect.bottom + window.scrollY) + 'px'; menu.style.left = (rect.left + window.scrollX - 80) + 'px';
+                return;
+            }
+            if (e.target.closest('.status-toggle')) {
+                const tgl = e.target.closest('.status-toggle');
+                askAuth('toggle', { id: tgl.dataset.id, kat: tgl.dataset.kat, y: tgl.dataset.y, m: tgl.dataset.m });
+            }
+            if (!e.target.closest('#actionMenu')) menu.style.display = 'none';
+        };
+
+        function doEdit() { document.getElementById('actionMenu').style.display = 'none'; askAuth('edit_trigger'); }
+        function doDelete() { document.getElementById('actionMenu').style.display = 'none'; new bootstrap.Modal('#modalKonfirmasiHapus').show(); }
+        function eksekusiHapus() { bootstrap.Modal.getInstance('#modalKonfirmasiHapus').hide(); askAuth('delete_trigger'); }
+
+        function askAuth(type, params = null) {
+            pendingAction = type; pendingParams = params;
+            document.getElementById('inputPIN').value = "";
+            document.getElementById('inputEditorName').value = localStorage.getItem('delta8_editor') || "";
+            const modalEl = document.getElementById('modalVerifyAuth');
+            const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+            modal.show();
+
+            // Auto-focus ke PIN jika Editor sudah ada
+            modalEl.addEventListener('shown.bs.modal', function () {
+                if (document.getElementById('inputEditorName').value.trim() !== "") {
+                    document.getElementById('inputPIN').focus();
+                } else {
+                    document.getElementById('inputEditorName').focus();
+                }
+            }, { once: true });
+        }
+
+        function checkAuth() {
+            const pin = document.getElementById('inputPIN').value, editor = document.getElementById('inputEditorName').value.trim();
+            if (pin !== APP_PIN || editor.length < 2) return;
+            localStorage.setItem('delta8_editor', editor.toUpperCase());
+            bootstrap.Modal.getInstance('#modalVerifyAuth').hide();
+            setTimeout(executeAction, 300);
+        }
+
+        function executeAction() {
+            if (pendingAction === 'tambah') { 
+                document.getElementById('fAdd').reset(); 
+                document.getElementById('editMemberId').value = ""; 
+                bootstrap.Modal.getOrCreateInstance('#modalTambah').show(); 
+            } else if (pendingAction === 'catat') { 
+                document.getElementById('fTrans').reset(); 
+                document.getElementById('editTransIdx').value = ""; 
+                document.getElementById('trans_date').valueAsDate = new Date(); 
+                bootstrap.Modal.getOrCreateInstance('#modalCatat').show(); 
+            } else if (pendingAction === 'download') {
+                downloadFinancialPDF();
+            } else if (pendingAction === 'edit_trigger') {
+                if (currentContext.type === 'member') {
+                    const p = [...DB_DRIVER, ...DB_HELPER].find(x => x.id == currentContext.id);
+                    document.getElementById('editMemberId').value = p.id; 
+                    document.getElementById('n').value = p.nama;
+                    document.getElementById('k').value = DB_DRIVER.find(x => x.id == currentContext.id) ? 'Driver' : 'Helper';
+                    bootstrap.Modal.getOrCreateInstance('#modalTambah').show();
+                } else {
+                    const t = DB_TRANSAKSI[currentContext.idx];
+                    document.getElementById('editTransIdx').value = currentContext.idx;
+                    document.getElementById('trans_type').value = t.tp; 
+                    document.getElementById('trans_date').value = t.d;
+                    document.getElementById('trans_source').value = t.p; 
+                    document.getElementById('trans_ket').value = t.k;
+                    document.getElementById('trans_val').value = t.v;
+                    bootstrap.Modal.getOrCreateInstance('#modalCatat').show();
+                }
+            } else if (pendingAction === 'delete_trigger') {
+                if (currentContext.type === 'member') {
+                    const isDriver = DB_DRIVER.some(x => x.id == currentContext.id);
+                    const kat = isDriver ? 'DRIVER' : 'HELPER';
+                    const p = [...DB_DRIVER, ...DB_HELPER].find(x => x.id == currentContext.id);
+                    addLog("Hapus anggota", `${kat} - ${p.nama}`);
+                    DB_DRIVER = DB_DRIVER.filter(x => x.id != currentContext.id); 
+                    DB_HELPER = DB_HELPER.filter(x => x.id != currentContext.id);
+                } else {
+                    const t = DB_TRANSAKSI[currentContext.idx];
+                    addLog("Hapus transaksi", `TRANSAKSI - ${t.tp.toUpperCase()} - ${t.p} - ${t.k || '-'}`);
+                    DB_TRANSAKSI.splice(currentContext.idx, 1);
+                }
+                syncAll();
+            } else if (pendingAction === 'toggle') {
+                let p = (pendingParams.kat === 'Driver' ? DB_DRIVER : DB_HELPER).find(x => x.id == pendingParams.id);
+                if (!p.status[pendingParams.y]) p.status[pendingParams.y] = {};
+                p.status[pendingParams.y][pendingParams.m] = !p.status[pendingParams.y][pendingParams.m];
+                const isLunas = p.status[pendingParams.y][pendingParams.m];
+                const mm = pendingParams.m.toString().padStart(2, '0');
+                addLog("Iuran", `${pendingParams.kat.toUpperCase()} - ${p.nama} - ${mm}/${pendingParams.y} - [${isLunas ? "✅ - LUNAS" : "❌ - BATAL"}]`);
+                syncAll();
+            }
+        }
+
+        async function loadFromCloud() {
+            document.getElementById('sync-status').innerText = "⏳ MEMUAT DATA...";
+            try {
+                const res = await fetch(CLOUD_URL + "?action=read"); 
+                const data = await res.json();
+                DB_DRIVER = data.driver || []; DB_HELPER = data.helper || []; DB_TRANSAKSI = data.transaksi || []; DB_LOGS = data.logs || [];
+                render(); 
+                document.getElementById('sync-status').innerText = "☁️ TERHUBUNG";
+            } catch (e) { document.getElementById('sync-status').innerText = "☁️ TERPUTUS"; render(); }
+        }
+
+        async function syncAll() {
+            render(); 
+            document.getElementById('sync-status').innerText = "⏳ MENYIMPAN...";
+            try {
+                await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ driver: DB_DRIVER, helper: DB_HELPER, transaksi: DB_TRANSAKSI, logs: DB_LOGS }) });
+                document.getElementById('sync-status').innerText = "☁️ TERHUBUNG";
+            } catch (e) { document.getElementById('sync-status').innerText = "⚠️ GAGAL SINKRON"; }
+        }
+
+        function addLog(aksi, ket) {
+            const d = new Date(), pad = (n) => n.toString().padStart(2, '0');
+            const time = `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}.${pad(d.getMinutes())}`;
+            DB_LOGS.unshift({ time, editor: localStorage.getItem('delta8_editor'), aksi: aksi.toUpperCase(), ket: ket });
+        }
+
+        function clearLogs() { new bootstrap.Modal('#modalKonfirmasiLog').show(); }
+        function eksekusiHapusLog() { bootstrap.Modal.getInstance('#modalKonfirmasiLog').hide(); addLog("SYSTEM", "BERSIHKAN SEMUA LOG"); DB_LOGS = []; syncAll(); }
+
+        function render() {
+            const gd = document.getElementById('grid-driver'), gh = document.getElementById('grid-helper'), hi = document.getElementById('hist'), lg = document.getElementById('log-list');
+            gd.innerHTML = gh.innerHTML = hi.innerHTML = lg.innerHTML = '';
+            
+            const monthVal = document.getElementById('selMonth').value;
+            const y = parseInt(document.getElementById('selYear').value);
+            const isAll = (monthVal === "all");
+            const m = isAll ? 0 : parseInt(monthVal);
+            
+            const query = document.getElementById('memberSearch').value.toUpperCase();
+
+            document.getElementById('label-periode-laporan').innerText = isAll ? "TAHUNAN (" + y + ")" : "BULANAN";
+
+            let sAwal = calculatePastBalance(isAll ? 1 : m, y), cIuran = 0, cLainnya = 0, cOut = 0;
+
+            const draw = (list, target, kat) => {
+                let filtered = list.sort((a,b) => a.nama.localeCompare(b.nama));
+                if (query) { filtered = filtered.filter(p => p.nama.toUpperCase().includes(query)); }
+
+                filtered.forEach((p, idx) => {
+                    let count = 0, cells = ''; if (!p.status) p.status = {};
+                    for (let i = 1; i <= 12; i++) {
+                        let s = p.status[y]?.[i] || false; 
+                        if (s) { 
+                            count++; 
+                            if (isAll) cIuran += 25000;
+                            else if (i === m) cIuran += 25000;
+                        }
+                        cells += `<td class="status-toggle ${s ? 'text-success' : 'text-danger'}" data-id="${p.id}" data-kat="${kat}" data-y="${y}" data-m="${i}">${s ? '✅' : '❌'}</td>`;
+                    }
+                    target.innerHTML += `<tr><td class="no-col">${idx + 1}</td><td class="name-col">${p.nama}</td>${cells}<td class="text-center-force">${count}/12</td><td class="col-aksi-center"><div class="btn-aksi-trigger" data-type="member" data-id="${p.id}">⋮</div></td></tr>`;
+                });
+            };
+
+            draw(DB_DRIVER, gd, 'Driver'); draw(DB_HELPER, gh, 'Helper');
+
+            DB_TRANSAKSI.forEach((x, idx) => {
+                let d = new Date(x.d);
+                let show = (isAll ? d.getFullYear() === y : d.getFullYear() === y && (d.getMonth() + 1) === m);
+
+                if (show) {
+                    if (x.tp === 'Pemasukan') cLainnya += x.v; else cOut += x.v;
+                    hi.innerHTML += `<tr><td class="text-center">${x.d.split('-').reverse().join('/')}</td><td class="fw-bold ${x.tp == 'Pemasukan' ? 'text-success' : 'text-danger'} text-center">${x.tp.toUpperCase()}</td><td>${x.p}</td><td>${x.k || '-'}</td><td class="fw-bold text-end">Rp ${x.v.toLocaleString()}</td><td class="col-aksi-center"><div class="btn-aksi-trigger" data-type="trans" data-idx="${idx}">⋮</div></td></tr>`;
+                }
+            });
+
+            DB_LOGS.slice(0, 50).forEach(l => { lg.innerHTML += `<tr><td>${l.time}</td><td>${l.editor}</td><td><small class="badge bg-dark">${l.aksi}</small></td><td>${l.ket}</td></tr>`; });
+
+            document.getElementById('s-awal').innerText = "Rp " + sAwal.toLocaleString();
+            document.getElementById('in').innerText = "Rp " + cIuran.toLocaleString();
+            document.getElementById('out').innerText = "Rp " + cOut.toLocaleString();
+            document.getElementById('bal').innerText = "Rp " + cLainnya.toLocaleString();
+            document.getElementById('s-akhir').innerText = "Rp " + (sAwal + cIuran + cLainnya - cOut).toLocaleString();
+        }
+
+        function calculatePastBalance(m, y) {
+            let tIn = 0, tOut = 0;
+            [...DB_DRIVER, ...DB_HELPER].forEach(p => { 
+                if (p.status) {
+                    Object.keys(p.status).forEach(sy => { 
+                        Object.keys(p.status[sy]).forEach(sm => { 
+                            if (parseInt(sy) < y || (parseInt(sy) == y && parseInt(sm) < m)) {
+                                if (p.status[sy][sm]) tIn += 25000;
+                            }
+                        }); 
+                    }); 
+                }
+            });
+            DB_TRANSAKSI.forEach(x => { 
+                let d = new Date(x.d); 
+                if (d.getFullYear() < y || (d.getFullYear() == y && (d.getMonth() + 1) < m)) { 
+                    if (x.tp === 'Pemasukan') tIn += x.v; else tOut += x.v; 
+                }
+            });
+            return tIn - tOut;
+        }
+
+        document.getElementById('fAdd').onsubmit = (e) => {
+            e.preventDefault(); const id = document.getElementById('editMemberId').value, kat = document.getElementById('k').value.toUpperCase(), n = document.getElementById('n').value.toUpperCase();
+            if (id) { 
+                let p = [...DB_DRIVER, ...DB_HELPER].find(x => x.id == id);
+                const lama = p.nama; p.nama = n; addLog("Edit anggota", `${kat} - ${lama} => ${n}`);
+            } else { 
+                n.split('\n').filter(x => x.trim()).forEach(nm => { 
+                    let p = { id: "ID-"+Date.now()+Math.random().toString(36).substr(2,3), nama: nm.trim(), status: {} }; 
+                    if (kat === 'DRIVER') DB_DRIVER.push(p); else DB_HELPER.push(p); 
+                    addLog("Tambah anggota", `${kat} - ${nm.trim()}`); 
+                });
+            }
+            syncAll(); bootstrap.Modal.getInstance('#modalTambah').hide();
+        };
+
+        document.getElementById('fTrans').onsubmit = (e) => {
+            e.preventDefault(); const f = new FormData(e.target), idx = document.getElementById('editTransIdx').value;
+            const d = { tp: f.get('tp'), d: f.get('d'), p: f.get('p').toUpperCase(), k: f.get('k').toUpperCase(), v: parseInt(f.get('v')) };
+            if (idx !== "") { DB_TRANSAKSI[idx] = d; addLog("Edit transaksi", `TRANSAKSI - ${d.tp.toUpperCase()} - ${d.p}`); }
+            else { DB_TRANSAKSI.push(d); addLog("Tambah transaksi", `TRANSAKSI - ${d.tp.toUpperCase()} - ${d.p}`); }
+            syncAll(); bootstrap.Modal.getInstance('#modalCatat').hide();
+        };
+
+        async function downloadFinancialPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF('p', 'mm', 'a4');
+            const mText = document.getElementById('selMonth').options[document.getElementById('selMonth').selectedIndex].text.toUpperCase();
+            const yText = document.getElementById('selYear').value;
+
+            const blackBg = [15, 15, 15]; const goldAccent = [212, 175, 55]; const whiteText = [255, 255, 255];
+            doc.setFillColor(blackBg[0], blackBg[1], blackBg[2]); doc.rect(0, 0, 210, 45, 'F');
+            doc.setTextColor(goldAccent[0], goldAccent[1], goldAccent[2]); doc.setFont("times", "bold"); doc.setFontSize(22);
+            doc.text("LAPORAN RINCIAN UANG KAS", 105, 20, { align: "center" });
+            doc.setTextColor(whiteText[0], whiteText[1], whiteText[2]); doc.setFontSize(12);
+            doc.text("DRIVER HELPER DELTA 8 & LOGISTICS", 105, 30, { align: "center" });
+            doc.setFontSize(10); doc.text(`Periode: ${mText} ${yText}`, 105, 38, { align: "center" });
+
+            const sAwal = document.getElementById('s-awal').innerText;
+            const sAkhir = document.getElementById('s-akhir').innerText;
+            const iuran = document.getElementById('in').innerText;
+            const keluar = document.getElementById('out').innerText;
+            const lainnya = document.getElementById('bal').innerText;
+
+            const drawCard = (x, y, w, h, title, value, bgColor) => {
+                doc.setFillColor(bgColor[0], bgColor[1], bgColor[2]); doc.roundedRect(x, y, w, h, 2, 2, 'F');
+                doc.setTextColor(0); doc.setFontSize(11); doc.text(title, x+w/2, y+10, {align:'center'});
+                doc.setFontSize(14); doc.text(value, x+w/2, y+22, {align:'center'});
+            };
+
+            drawCard(15, 55, 85, 30, "Saldo Awal", sAwal, [250, 220, 100]);
+            drawCard(110, 55, 85, 30, "Total Iuran (+)", iuran, [200, 255, 200]);
+            drawCard(15, 90, 85, 30, "Pemasukan Lain (+)", lainnya, [200, 255, 200]);
+            drawCard(110, 90, 85, 30, "Saldo Keluar (-)", keluar, [255, 200, 200]);
+
+            doc.setFillColor(15, 15, 15); doc.roundedRect(15, 125, 180, 25, 2, 2, 'F');
+            doc.setTextColor(212, 175, 55); doc.setFontSize(12); doc.text("SALDO AKHIR TERSISA", 105, 133, {align:'center'});
+            doc.setFontSize(18); doc.text(sAkhir, 105, 144, {align:'center'});
+
+            const transData = [];
+            document.querySelectorAll('#hist tr').forEach(row => {
+                const cols = row.querySelectorAll('td');
+                if(cols.length > 0) transData.push([cols[0].innerText, cols[1].innerText, cols[2].innerText, cols[3].innerText, cols[4].innerText]);
+            });
+
+            doc.autoTable({
+                startY: 160, head: [['TGL', 'TIPE', 'SUMBER', 'KET', 'JUMLAH']], body: transData,
+                theme: 'grid', headStyles: { fillColor: [15, 15, 15], textColor: [212, 175, 55] },
+                styles: { font: 'times', fontSize: 8 }, margin: { left: 15, right: 15 }
+            });
+
+            doc.save(`KAS_DELTA8_${mText}_${yText}.pdf`);
+        }
+
+        window.onload = () => {
+            setTheme(localStorage.getItem('delta8_theme') || 'luxury');
+            const sm = document.getElementById('selMonth'), sy = document.getElementById('selYear'), now = new Date();
+            const nm = ["", "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+            sm.innerHTML = `<option value="all">SEMUA BULAN (ALL)</option>`;
+            for (let i = 1; i <= 12; i++) sm.innerHTML += `<option value="${i}" ${i === (now.getMonth() + 1) ? 'selected' : ''}>${nm[i]}</option>`;
+            for (let i = 2024; i <= 2050; i++) sy.innerHTML += `<option value="${i}" ${i === now.getFullYear() ? 'selected' : ''}>${i}</option>`;
+            loadFromCloud();
+        };
+    </script>
 </body>
 </html>

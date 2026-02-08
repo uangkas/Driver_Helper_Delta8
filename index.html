@@ -583,7 +583,7 @@ if ('serviceWorker' in navigator) {
         .catch(err => console.error('Service Worker Error', err));
 }
 
-// Meminta Izin Notifikasi saat halaman dimuat
+// Meminta Izin Notifikasi
 function askPermission() {
     if ("Notification" in window && Notification.permission !== "granted") {
         Notification.requestPermission();
@@ -591,7 +591,7 @@ function askPermission() {
 }
 window.addEventListener('DOMContentLoaded', askPermission);
 
-// --- 2. FUNGSI KIRIM NOTIFIKASI OTOMATIS ---
+// --- 2. FUNGSI KIRIM NOTIFIKASI ---
 async function notifyUser(title, body) {
     if (!('Notification' in window)) return;
     
@@ -599,7 +599,7 @@ async function notifyUser(title, body) {
         try {
             const registration = await navigator.serviceWorker.ready;
             
-            // Menggunakan timestamp agar setiap notifikasi dianggap baru dan selalu bunyi
+            // Menggunakan timestamp agar notifikasi selalu dianggap baru dan berbunyi
             const uniqueTag = 'delta8-' + Date.now();
 
             await registration.showNotification(title, {
@@ -608,10 +608,11 @@ async function notifyUser(title, body) {
                 badge: 'https://cdn-icons-png.flaticon.com/512/1828/1828640.png',
                 vibrate: [200, 100, 200],
                 tag: uniqueTag, 
-                renotify: true
+                renotify: true,
+                requireInteraction: false
             });
         } catch (err) {
-            console.error("Gagal kirim notif:", err);
+            console.error("Gagal menampilkan notifikasi:", err);
         }
     }
 }
@@ -621,34 +622,35 @@ let lastSeenLogTime = null;
 
 async function fetchNewLogs() {
     try {
-        const response = await fetch(CLOUD_URL + "?action=read");
+        // Menggunakan cache: 'no-store' agar browser selalu mengambil data terbaru
+        const response = await fetch(CLOUD_URL + "?action=read", { cache: 'no-store' });
         const data = await response.json();
         const logs = data.logs || [];
         
         if (logs.length > 0) {
             const topLog = logs[0];
 
-            // Inisialisasi awal saat aplikasi dibuka
+            // Inisialisasi saat pertama kali aplikasi dibuka
             if (lastSeenLogTime === null) {
                 lastSeenLogTime = topLog.time;
                 return;
             }
 
-            // PERBAIKAN: Notif berjalan untuk siapa pun editornya
+            // Jika terdeteksi log dengan waktu yang berbeda
             if (topLog.time !== lastSeenLogTime) {
-                // Langsung kirim notifikasi tanpa mengecek nama editor
+                // Kirim notifikasi untuk siapa pun editornya (termasuk diri sendiri)
                 notifyUser(`DELTA 8: ${topLog.aksi}`, `${topLog.editor}: ${topLog.ket}`);
                 
-                // Update waktu terakhir agar tidak berulang
+                // Simpan waktu log terakhir
                 lastSeenLogTime = topLog.time;
             }
         }
     } catch (e) {
-        console.error("Koneksi database gagal");
+        console.error("Sinkronisasi otomatis gagal. Memeriksa ulang...");
     }
 }
 
-// Jalankan pengecekan otomatis setiap 20 detik
+// Cek data baru setiap 20 detik
 setInterval(fetchNewLogs, 20000);
 
         function pindahHalaman(idHal, btn) {

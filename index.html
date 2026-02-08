@@ -54,31 +54,7 @@
             -webkit-tap-highlight-color: transparent;
         }
         
-        .btn-tes-notif {
-    position: fixed;
-    bottom: 20px;
-    right: 20px;
-    width: 45px;
-    height: 45px;
-    background: var(--accent-color, #007bff);
-    color: white;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 20px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
-    cursor: pointer;
-    z-index: 9999;
-    border: 2px solid white;
-    transition: all 0.3s;
-}
-
-.btn-tes-notif:active {
-    transform: scale(0.9);
-}
-
-
+     
         body {
             background-color: var(--bg-body);
             color: var(--text-main);
@@ -412,11 +388,6 @@
     </style>
 </head>
 
-<div class="btn-tes-notif" onclick="manualTestNotif()" title="Tes Notifikasi">
-    🔔
-</div>
-
-
 <body data-theme="luxury">
     <div id="ptr-indicator">
         <div class="ptr-circle" id="ptr-icon">⬇️</div>
@@ -605,14 +576,14 @@
         let DB_DRIVER = [], DB_HELPER = [], DB_TRANSAKSI = [], DB_LOGS = [];
         let pendingAction = null, pendingParams = null, currentContext = { type: '', id: null, idx: null };
         
-        // --- 1. KONFIGURASI & REGISTRASI ---
+// --- 1. REGISTRASI SERVICE WORKER ---
 if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('sw.js')
+    navigator.serviceWorker.register('./sw.js')
         .then(() => console.log('Service Worker Active'))
         .catch(err => console.error('Service Worker Error', err));
 }
 
-// Meminta Izin saat halaman dimuat
+// Meminta Izin Notifikasi saat halaman dimuat
 function askPermission() {
     if ("Notification" in window && Notification.permission !== "granted") {
         Notification.requestPermission();
@@ -620,18 +591,23 @@ function askPermission() {
 }
 window.addEventListener('DOMContentLoaded', askPermission);
 
-// --- 2. FUNGSI KIRIM NOTIFIKASI ---
+// --- 2. FUNGSI KIRIM NOTIFIKASI OTOMATIS ---
 async function notifyUser(title, body) {
     if (!('Notification' in window)) return;
+    
     if (Notification.permission === 'granted') {
         try {
             const registration = await navigator.serviceWorker.ready;
+            
+            // Menggunakan timestamp agar setiap notifikasi dianggap baru dan selalu bunyi
+            const uniqueTag = 'delta8-' + Date.now();
+
             await registration.showNotification(title, {
                 body: body,
                 icon: 'https://cdn-icons-png.flaticon.com/512/1828/1828640.png',
                 badge: 'https://cdn-icons-png.flaticon.com/512/1828/1828640.png',
                 vibrate: [200, 100, 200],
-                tag: 'delta8-notif',
+                tag: uniqueTag, 
                 renotify: true
             });
         } catch (err) {
@@ -640,7 +616,7 @@ async function notifyUser(title, body) {
     }
 }
 
-// --- 3. LOGIKA PENGAMBILAN DATA (POLLING) ---
+// --- 3. LOGIKA POLLING DATABASE ---
 let lastSeenLogTime = null;
 
 async function fetchNewLogs() {
@@ -651,47 +627,29 @@ async function fetchNewLogs() {
         
         if (logs.length > 0) {
             const topLog = logs[0];
-            const myName = localStorage.getItem('delta8_editor') || "GUEST";
 
-            // Inisialisasi pertama kali agar tidak banjir notif lama
+            // Inisialisasi awal saat aplikasi dibuka
             if (lastSeenLogTime === null) {
                 lastSeenLogTime = topLog.time;
                 return;
             }
 
-            // Jika ada log baru
+            // PERBAIKAN: Notif berjalan untuk siapa pun editornya
             if (topLog.time !== lastSeenLogTime) {
-                // Cek apakah yang melakukan bukan user saat ini
-                if (topLog.editor.trim().toUpperCase() !== myName.trim().toUpperCase()) {
-                    notifyUser(`DELTA 8: ${topLog.aksi}`, `${topLog.editor}: ${topLog.ket}`);
-                }
+                // Langsung kirim notifikasi tanpa mengecek nama editor
+                notifyUser(`DELTA 8: ${topLog.aksi}`, `${topLog.editor}: ${topLog.ket}`);
+                
+                // Update waktu terakhir agar tidak berulang
                 lastSeenLogTime = topLog.time;
             }
         }
     } catch (e) {
-        console.error("Gagal sinkron log database");
+        console.error("Koneksi database gagal");
     }
 }
 
-// Jalankan pengecekan otomatis
+// Jalankan pengecekan otomatis setiap 20 detik
 setInterval(fetchNewLogs, 20000);
-
-// --- 4. FUNGSI TOMBOL TES MANUAL ---
-function manualTestNotif() {
-    if (Notification.permission === 'denied') {
-        alert("Izin diblokir! Klik ikon gembok di URL bar untuk aktifkan.");
-        return;
-    }
-    
-    Notification.requestPermission().then(perm => {
-        if (perm === 'granted') {
-            notifyUser("TES KONEKSI DELTA 8", "Halo Admin Mancung! Sistem notifikasi AKTIF.");
-        } else {
-            alert("Izin ditolak!");
-        }
-    });
-}
-
 
         function pindahHalaman(idHal, btn) {
             document.querySelectorAll('.halaman-content').forEach(h => h.classList.remove('active'));

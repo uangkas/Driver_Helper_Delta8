@@ -731,33 +731,27 @@ let lastSeenLogTime = null;
 
 async function fetchNewLogs() {
     try {
-        // Menggunakan cache: 'no-store' agar browser selalu mengambil data terbaru
-        const response = await fetch(CLOUD_URL + "?action=read", { cache: 'no-store' });
+        // Tambahkan timestamp agar browser tidak mengambil data lama (cache)
+        const response = await fetch(`${CLOUD_URL}?action=read&t=${Date.now()}`, { cache: 'no-store' });
         const data = await response.json();
         const logs = data.logs || [];
         
         if (logs.length > 0) {
             const topLog = logs[0];
-
-            // Inisialisasi saat pertama kali aplikasi dibuka
             if (lastSeenLogTime === null) {
                 lastSeenLogTime = topLog.time;
                 return;
             }
-
-            // Jika terdeteksi log dengan waktu yang berbeda
             if (topLog.time !== lastSeenLogTime) {
-                // Kirim notifikasi untuk siapa pun editornya (termasuk diri sendiri)
                 notifyUser(`UangKAS: ${topLog.aksi}`, `${topLog.editor}: ${topLog.ket}`);
-                
-                // Simpan waktu log terakhir
                 lastSeenLogTime = topLog.time;
             }
         }
     } catch (e) {
-        console.error("Sinkronisasi otomatis gagal. Memeriksa ulang...");
+        console.error("Auto-sync pause...");
     }
 }
+
 
 // Cek data baru setiap 20 detik
 setInterval(fetchNewLogs, 20000);
@@ -900,10 +894,18 @@ setInterval(fetchNewLogs, 20000);
         }
 
         function addLog(aksi, ket) {
-            const d = new Date(), pad = (n) => n.toString().padStart(2, '0');
-            const time = `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}.${pad(d.getMinutes())}`;
-            DB_LOGS.unshift({ time, editor: localStorage.getItem('delta8_editor'), aksi: aksi.toUpperCase(), ket: ket });
-        }
+    const d = new Date(), pad = (n) => n.toString().padStart(2, '0');
+    // Format Waktu: DD/MM/YYYY HH.MM
+    const time = `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}.${pad(d.getMinutes())}`;
+    
+    // Simpan ke DB_LOGS
+    DB_LOGS.unshift({ 
+        time, 
+        editor: localStorage.getItem('delta8_editor') || 'ADMIN', 
+        aksi: aksi.toUpperCase(), 
+        ket: ket 
+    });
+}
 
         function clearLogs() { new bootstrap.Modal('#modalKonfirmasiLog').show(); }
         function eksekusiHapusLog() { bootstrap.Modal.getInstance('#modalKonfirmasiLog').hide(); addLog("SYSTEM", "BERSIHKAN SEMUA LOG"); DB_LOGS = []; syncAll(); }
@@ -986,19 +988,52 @@ setInterval(fetchNewLogs, 20000);
         }
 
         document.getElementById('fAdd').onsubmit = (e) => {
-            e.preventDefault(); const id = document.getElementById('editMemberId').value, kat = document.getElementById('k').value.toUpperCase(), n = document.getElementById('n').value.toUpperCase();
-            if (id) { 
-                let p = [...DB_DRIVER, ...DB_HELPER].find(x => x.id == id);
-                const lama = p.nama; p.nama = n; addLog("Edit anggota", `${kat} - ${lama} => ${n}`);
-            } else { 
-                n.split('\n').filter(x => x.trim()).forEach(nm => { 
-                    let p = { id: "ID-"+Date.now()+Math.random().toString(36).substr(2,3), nama: nm.trim(), status: {} }; 
-                    if (kat === 'DRIVER') DB_DRIVER.push(p); else DB_HELPER.push(p); 
-                    addLog("Tambah anggota", `${kat} - ${nm.trim()}`); 
-                });
+    e.preventDefault();
+    const id = document.getElementById('editMemberId').value;
+    const kat = document.getElementById('k').value.toUpperCase();
+    const n = document.getElementById('n').value.toUpperCase();
+    
+    // Gabungkan database untuk pengecekan duplikat global
+    const allMembers = [...DB_DRIVER, ...DB_HELPER];
+
+    if (id) { 
+        // Mode Edit
+        let p = allMembers.find(x => x.id == id);
+        const lama = p.nama; 
+        p.nama = n; 
+        addLog("EDIT ANGGOTA", `${kat} - ${lama} => ${n}`);
+    } else { 
+        // Mode Tambah Baru
+        const barisNama = n.split('\n').filter(x => x.trim());
+        let namaBerhasil = 0;
+
+        barisNama.forEach(nm => { 
+            const namaClean = nm.trim();
+            // Cek apakah nama sudah ada (Case Insensitive)
+            const isDuplicate = allMembers.some(m => m.nama === namaClean);
+
+            if (!isDuplicate) {
+                let p = { 
+                    id: "ID-"+Date.now()+Math.random().toString(36).substr(2,3), 
+                    nama: namaClean, 
+                    status: {} 
+                }; 
+                if (kat === 'DRIVER') DB_DRIVER.push(p); else DB_HELPER.push(p); 
+                addLog("TAMBAH ANGGOTA", `${kat} - ${namaClean}`);
+                namaBerhasil++;
+            } else {
+                console.warn(`Nama "${namaClean}" sudah ada di database.`);
             }
-            syncAll(); bootstrap.Modal.getInstance('#modalTambah').hide();
-        };
+        });
+
+        if (namaBerhasil === 0 && barisNama.length > 0) {
+            alert("⚠️ Gagal! Nama yang Anda input sudah terdaftar sebagai Driver atau Helper.");
+            return;
+        }
+    }
+    syncAll(); 
+    bootstrap.Modal.getInstance('#modalTambah').hide();
+};
 
         document.getElementById('fTrans').onsubmit = (e) => {
     e.preventDefault();

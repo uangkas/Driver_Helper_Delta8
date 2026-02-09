@@ -576,6 +576,97 @@
         let DB_DRIVER = [], DB_HELPER = [], DB_TRANSAKSI = [], DB_LOGS = [];
         let pendingAction = null, pendingParams = null, currentContext = { type: '', id: null, idx: null };
         
+        // ==========================================
+// SISTEM LOG OTOMATIS DELTA 8 (ADMIN MANCUNG)
+// ==========================================
+
+/**
+ * 1. Fungsi Generator Format Teks Log
+ */
+function buatLog(tipeLog, d) {
+    let teks = "";
+    switch (tipeLog) {
+        case 'iuran':
+            const status = d.lunas ? "✅ - LUNAS" : "❌ - BATAL";
+            teks = `Iuran : ${d.kat} - ${d.nama} - ${d.bln}/${d.thn} - [${status}]`;
+            break;
+        case 'tambah_anggota':
+            teks = `Tambah anggota : ${d.kat} - ${d.nama}`;
+            break;
+        case 'hapus_anggota':
+            teks = `Hapus anggota : ${d.kat} - ${d.nama}`;
+            break;
+        case 'edit_anggota':
+            teks = `Edit anggota : ${d.kat} - ${d.lama} => ${d.baru}`;
+            break;
+        case 'tambah_transaksi':
+            teks = `Tambah transaksi : ${d.kat} - ${d.tipe} - ${d.sumber} - ${d.ket} - ${d.nominal}`;
+            break;
+        case 'hapus_transaksi':
+            teks = `Hapus transaksi : ${d.kat} - ${d.tipe} - ${d.sumber} - ${d.ket} - ${d.nominal}`;
+            break;
+        case 'edit_transaksi':
+            teks = `Edit transaksi : ${d.kat} - ${d.tipe} - ${d.sumber} - ${d.lama} => ${d.baru}`;
+            break;
+    }
+    return teks;
+}
+
+/**
+ * 2. Fungsi Utama Simpan Data + Log ke Cloud
+ */
+async function simpanDataDelta8(jenisAksi, kategori, detailData, aksiLabel) {
+    try {
+        // Buat teks log sesuai format permintaan Admin Mancung
+        const teksKeterangan = buatLog(jenisAksi, detailData);
+        
+        // Siapkan Payload Data
+        const payload = {
+            // Pastikan data inti (driver/helper/transaksi) sudah diupdate di variabel global sebelum panggil ini
+            driver: window.dataDriver || [], 
+            helper: window.dataHelper || [],
+            transaksi: window.dataTransaksi || [],
+            logs: [{
+                time: new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }),
+                editor: "Mancung", // Nama Admin Tetap
+                aksi: aksiLabel.toUpperCase(),
+                ket: teksKeterangan
+            }]
+        };
+
+        // Kirim ke Google Apps Script
+        const response = await fetch(CLOUD_URL, {
+            method: 'POST',
+            body: JSON.stringify(payload)
+        });
+
+        const result = await response.json();
+
+        if (result.result === "success") {
+            // Picu notifikasi lokal setelah berhasil simpan
+            notifyUser(`DELTA 8: ${aksiLabel}`, teksKeterangan);
+            alert("✓ Data Berhasil Disimpan & Dicatat");
+        } else {
+            throw new Error(result.message);
+        }
+    } catch (error) {
+        console.error("Gagal Simpan:", error);
+        alert("Gagal menyimpan data. Cek koneksi!");
+    }
+}
+
+// ==========================================
+// CONTOH CARA PAKAI OLEH ADMIN MANCUNG:
+// ==========================================
+/*
+  Untuk Iuran:
+  simpanDataDelta8('iuran', 'DRIVER', {kat:'DRIVER', nama:'BUDI', bln:'02', thn:'2026', lunas:true}, 'Update Iuran');
+
+  Untuk Transaksi:
+  simpanDataDelta8('tambah_transaksi', 'KAS', {kat:'KAS', tipe:'MASUK', sumber:'MANCUNG', ket:'Iuran Jan', nominal:'50.000'}, 'Tambah Kas');
+*/
+
+        
 // --- 1. REGISTRASI SERVICE WORKER ---
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js')

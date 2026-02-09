@@ -1,6 +1,6 @@
 {
   "name": "Driver Helper Delta 8",
-  "short_name": "Delta 8",
+  "short_name": "KAS_DELTA8",
   "description": "Aplikasi Manajemen Kas Driver Helper Delta 8",
   "start_url": "index.html",
   "display": "standalone",

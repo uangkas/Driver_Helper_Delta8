@@ -247,7 +247,7 @@
             text-align: center; 
             border-radius: 6px; 
             vertical-align: middle !important; 
-            width: 60px !important; 
+            width: 50px !important; 
         }
 
         thead th.no-col { z-index: 40 !important; top: 0; left: 0; background: var(--gradient) !important; }
@@ -339,7 +339,7 @@
         .menu-item { padding: 8px 15px; cursor: pointer; font-size: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-main); }
         
         .footer-app {
-            margin-top: 5px;
+            margin-top: 15px;
             padding: 5px 0;
             text-align: center;
             border-top: 1px solid var(--border-color);
@@ -385,6 +385,17 @@
         margin-bottom: 4px; /* Jarak ke tabel di bawahnya */
         padding: 0 5px;
     }
+    /* === PANJANGKAN KOLOM KETERANGAN LOG === */
+#log-list-table th:last-child {
+    width: 65% !important;   /* bisa 70% kalau mau lebih panjang */
+}
+
+#log-list-table td:last-child {
+    width: 65% !important;
+    white-space: normal !important;
+    word-break: break-word;
+}
+    
     </style>
 </head>
 
@@ -581,92 +592,99 @@
 // ==========================================
 
 /**
+ * 
  * 1. Fungsi Generator Format Teks Log
  */
-function buatLog(tipeLog, d) {
-    let teks = "";
-    switch (tipeLog) {
-        case 'iuran':
-            const status = d.lunas ? "✅ - LUNAS" : "❌ - BATAL";
-            teks = `Iuran : ${d.kat} - ${d.nama} - ${d.bln}/${d.thn} - [${status}]`;
-            break;
-        case 'tambah_anggota':
-            teks = `Tambah anggota : ${d.kat} - ${d.nama}`;
-            break;
-        case 'hapus_anggota':
-            teks = `Hapus anggota : ${d.kat} - ${d.nama}`;
-            break;
-        case 'edit_anggota':
-            teks = `Edit anggota : ${d.kat} - ${d.lama} => ${d.baru}`;
-            break;
-        case 'tambah_transaksi':
-            teks = `Tambah transaksi : ${d.kat} - ${d.tipe} - ${d.sumber} - ${d.ket} - ${d.nominal}`;
-            break;
-        case 'hapus_transaksi':
-            teks = `Hapus transaksi : ${d.kat} - ${d.tipe} - ${d.sumber} - ${d.ket} - ${d.nominal}`;
-            break;
-        case 'edit_transaksi':
-            teks = `Edit transaksi : ${d.kat} - ${d.tipe} - ${d.sumber} - ${d.lama} => ${d.baru}`;
-            break;
-    }
-    return teks;
+ 
+ function formatRupiah(n) {
+    return 'Rp ' + Number(n).toLocaleString('id-ID');
 }
 
-/**
- * 2. Fungsi Utama Simpan Data + Log ke Cloud
- */
-async function simpanDataDelta8(jenisAksi, kategori, detailData, aksiLabel) {
+function diffTransaksi(lama, baru) {
+    const perubahan = [];
+
+    if (lama.tp !== baru.tp)
+        perubahan.push(`TIPE ${lama.tp} => ${baru.tp}`);
+
+    if (lama.p !== baru.p)
+        perubahan.push(`SUMBER ${lama.p} => ${baru.p}`);
+
+    if ((lama.k || '') !== (baru.k || ''))
+        perubahan.push(`KET ${lama.k || '-'} => ${baru.k || '-'}`);
+
+    if (lama.v !== baru.v)
+        perubahan.push(`NOMINAL ${formatRupiah(lama.v)} => ${formatRupiah(baru.v)}`);
+
+    if (lama.d !== baru.d)
+        perubahan.push(`TGL ${lama.d} => ${baru.d}`);
+
+    return perubahan.length
+        ? perubahan.join(' | ')
+        : 'TIDAK ADA PERUBAHAN';
+}
+
+function buatLog(tipeLog, d) {
+    switch (tipeLog) {
+
+        case 'iuran': {
+            const mm = String(d.bln).padStart(2, '0');
+            const status = d.lunas ? '✅ - LUNAS' : '❌ - BATAL';
+            return `Iuran : ${d.kategori} - ${d.nama} - ${mm}/${d.thn} - [${status}]`;
+        }
+
+        case 'tambah_anggota':
+            return `Tambah anggota : ${d.kategori} - ${d.nama}`;
+
+        case 'hapus_anggota':
+            return `Hapus anggota : ${d.kategori} - ${d.nama}`;
+
+        case 'edit_anggota':
+            return `Edit anggota : ${d.kategori} - ${d.sebelum} => ${d.sesudah}`;
+
+        case 'tambah_transaksi':
+    return `${d.tipe} - ${d.sumber} - ${d.keterangan} - ${formatRupiah(d.nominal)}`;
+
+case 'hapus_transaksi':
+    return `${d.tipe} - ${d.sumber} - ${d.keterangan} - ${formatRupiah(d.nominal)}`;
+
+case 'edit_transaksi':
+    return `${d.tipe} - ${d.sumber} - ${d.perubahan}`;
+        default:
+            return 'Log tidak dikenal';
+    }
+}
+async function simpanDataDelta8(jenisAksi, detailData, aksiLabel) {
     try {
-        // Buat teks log sesuai format permintaan Admin Mancung
         const teksKeterangan = buatLog(jenisAksi, detailData);
-        
-        // Siapkan Payload Data
+        addLog(aksiLabel, teksKeterangan);
+
         const payload = {
-            // Pastikan data inti (driver/helper/transaksi) sudah diupdate di variabel global sebelum panggil ini
-            driver: window.dataDriver || [], 
-            helper: window.dataHelper || [],
-            transaksi: window.dataTransaksi || [],
-            logs: [{
-                time: new Date().toLocaleString('id-ID', { timeZone: 'Asia/Jakarta' }),
-                editor: "Mancung", // Nama Admin Tetap
-                aksi: aksiLabel.toUpperCase(),
-                ket: teksKeterangan
-            }]
+            action: jenisAksi,
+            detail: detailData,
+            logs: DB_LOGS
         };
 
-        // Kirim ke Google Apps Script
         const response = await fetch(CLOUD_URL, {
             method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
         });
 
         const result = await response.json();
 
-        if (result.result === "success") {
-            // Picu notifikasi lokal setelah berhasil simpan
-            notifyUser(`DELTA 8: ${aksiLabel}`, teksKeterangan);
-            alert("✓ Data Berhasil Disimpan & Dicatat");
-        } else {
-            throw new Error(result.message);
+        if (result.result !== "success") {
+            throw new Error(result.message || "Server error");
         }
+
+        await syncAll();
+        notifyUser(`UangKAS: ${aksiLabel.toUpperCase()}`, teksKeterangan);
+
     } catch (error) {
         console.error("Gagal Simpan:", error);
         alert("Gagal menyimpan data. Cek koneksi!");
     }
 }
 
-// ==========================================
-// CONTOH CARA PAKAI OLEH ADMIN MANCUNG:
-// ==========================================
-/*
-  Untuk Iuran:
-  simpanDataDelta8('iuran', 'DRIVER', {kat:'DRIVER', nama:'BUDI', bln:'02', thn:'2026', lunas:true}, 'Update Iuran');
-
-  Untuk Transaksi:
-  simpanDataDelta8('tambah_transaksi', 'KAS', {kat:'KAS', tipe:'MASUK', sumber:'MANCUNG', ket:'Iuran Jan', nominal:'50.000'}, 'Tambah Kas');
-*/
-
-        
 // --- 1. REGISTRASI SERVICE WORKER ---
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js')
@@ -691,7 +709,7 @@ async function notifyUser(title, body) {
             
             // PERBAIKAN: Gunakan timestamp agar tag selalu UNIK
             // Ini memaksa HP menganggap setiap pesan adalah pesan baru
-            const uniqueTag = 'delta8-' + Date.now();
+            const uniqueTag = 'UangKAS-' + Date.now();
 
             await registration.showNotification(title, {
                 body: body,
@@ -730,7 +748,7 @@ async function fetchNewLogs() {
             // Jika terdeteksi log dengan waktu yang berbeda
             if (topLog.time !== lastSeenLogTime) {
                 // Kirim notifikasi untuk siapa pun editornya (termasuk diri sendiri)
-                notifyUser(`DELTA 8: ${topLog.aksi}`, `${topLog.editor}: ${topLog.ket}`);
+                notifyUser(`UangKAS: ${topLog.aksi}`, `${topLog.editor}: ${topLog.ket}`);
                 
                 // Simpan waktu log terakhir
                 lastSeenLogTime = topLog.time;
@@ -983,13 +1001,58 @@ setInterval(fetchNewLogs, 20000);
         };
 
         document.getElementById('fTrans').onsubmit = (e) => {
-            e.preventDefault(); const f = new FormData(e.target), idx = document.getElementById('editTransIdx').value;
-            const d = { tp: f.get('tp'), d: f.get('d'), p: f.get('p').toUpperCase(), k: f.get('k').toUpperCase(), v: parseInt(f.get('v')) };
-            if (idx !== "") { DB_TRANSAKSI[idx] = d; addLog("Edit transaksi", `TRANSAKSI - ${d.tp.toUpperCase()} - ${d.p}`); }
-            else { DB_TRANSAKSI.push(d); addLog("Tambah transaksi", `TRANSAKSI - ${d.tp.toUpperCase()} - ${d.p}`); }
-            syncAll(); bootstrap.Modal.getInstance('#modalCatat').hide();
-        };
+    e.preventDefault();
 
+    const f = new FormData(e.target);
+    const idx = document.getElementById('editTransIdx').value;
+
+    const dataBaru = {
+        tp: f.get('tp'),
+        d: f.get('d'),
+        p: f.get('p').toUpperCase(),
+        k: f.get('k').toUpperCase(),
+        v: parseInt(f.get('v'))
+    };
+
+    // === EDIT TRANSAKSI ===
+    if (idx !== "") {
+        const dataLama = DB_TRANSAKSI[idx];
+        const perubahan = diffTransaksi(dataLama, dataBaru);
+
+        DB_TRANSAKSI[idx] = dataBaru;
+
+        addLog(
+            'EDIT TRANSAKSI',
+            buatLog('edit_transaksi', {
+                kategori: 'KAS',
+                tipe: dataBaru.tp.toUpperCase(),
+                sumber: dataBaru.p,
+                perubahan
+            })
+        );
+
+    } 
+    // === TAMBAH TRANSAKSI ===
+    else {
+        DB_TRANSAKSI.push(dataBaru);
+
+        addLog(
+            'TAMBAH TRANSAKSI',
+            buatLog('tambah_transaksi', {
+                kategori: 'KAS',
+                tipe: dataBaru.tp.toUpperCase(),
+                sumber: dataBaru.p,
+                keterangan: dataBaru.k || '-',
+                nominal: dataBaru.v
+            })
+        );
+    }
+    
+    
+
+    syncAll();
+    bootstrap.Modal.getInstance('#modalCatat').hide();
+};
         async function downloadFinancialPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF('p', 'mm', 'a4');

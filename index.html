@@ -547,8 +547,20 @@
 
         <div class="luxe-dropdown" onclick="toggleCol('export-col')"><span>📤 DOWNLOAD PDF & HAPUS LOG</span><span id="export-icon">▼</span></div>
         <div id="export-col" class="luxe-content">
-            <button class="btn-unduh-final" onclick="askAuth('download')">📥 UNDUH LAPORAN PDF</button>
-            <button class="btn-hapus-final" onclick="clearLogs()">HAPUS SEMUA LOG SISTEM</button>
+            <button class="btn-unduh-final" onclick="askAuth('download')">
+        📥 UNDUH LAPORAN PDF
+    </button>
+
+    <!-- 🔄 TOMBOL RESTORE -->
+    <button class="btn-unduh-final"
+            style="background:#10b981"
+            onclick="askAuth('restore')">
+        ♻️ RESTORE DATA DARI BACKUP
+    </button>
+
+    <button class="btn-hapus-final" onclick="clearLogs()">
+        HAPUS SEMUA LOG SISTEM
+    </button>
         </div>
     </div>
 </div>
@@ -582,10 +594,13 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        const CLOUD_URL = 'https://script.google.com/macros/s/AKfycbxbNEyYaUUHDD8k8AEaH1a2RAghmr35oDwvj3gElQeKVkQv_pgYW9vyeHO44zzuQ-6E/exec';
+        const CLOUD_URL = 'https://script.google.com/macros/s/AKfycbyzNoDQAzmVHn0JzA4ZmV_dmSk_r2Mmhw_8OueMnviEXHHIgcq8ghfnfN5amErfNQl4Vg/exec';
         const APP_PIN = "0000";
         let DB_DRIVER = [], DB_HELPER = [], DB_TRANSAKSI = [], DB_LOGS = [];
-        let pendingAction = null, pendingParams = null, currentContext = { type: '', id: null, idx: null };
+        let pendingAction = null,
+    pendingParams = null,
+    currentContext = { type: '', id: null, idx: null },
+    restoreTarget = { year: null, month: null };
         
         // ==========================================
 // SISTEM LOG OTOMATIS DELTA 8 (ADMIN MANCUNG)
@@ -651,37 +666,6 @@ case 'edit_transaksi':
     return `${d.tipe} - ${d.sumber} - ${d.perubahan}`;
         default:
             return 'Log tidak dikenal';
-    }
-}
-async function simpanDataDelta8(jenisAksi, detailData, aksiLabel) {
-    try {
-        const teksKeterangan = buatLog(jenisAksi, detailData);
-        addLog(aksiLabel, teksKeterangan);
-
-        const payload = {
-            action: jenisAksi,
-            detail: detailData,
-            logs: DB_LOGS
-        };
-
-        const response = await fetch(CLOUD_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-        });
-
-        const result = await response.json();
-
-        if (result.result !== "success") {
-            throw new Error(result.message || "Server error");
-        }
-
-        await syncAll();
-        notifyUser(`UangKAS: ${aksiLabel.toUpperCase()}`, teksKeterangan);
-
-    } catch (error) {
-        console.error("Gagal Simpan:", error);
-        alert("Gagal menyimpan data. Cek koneksi!");
     }
 }
 
@@ -871,6 +855,16 @@ setInterval(fetchNewLogs, 20000);
                 addLog("Iuran", `${pendingParams.kat.toUpperCase()} - ${p.nama} - ${mm}/${pendingParams.y} - [${isLunas ? "✅ - LUNAS" : "❌ - BATAL"}]`);
                 syncAll();
             }
+            
+            else if (pendingAction === 'restore') {
+    const y = document.getElementById('selYear').value;
+    const mSelect = document.getElementById('selMonth').value;
+    const m = (mSelect === 'all')
+        ? (new Date().getMonth() + 1)
+        : mSelect;
+
+    previewRestore(y, m);
+}
         }
 
         async function loadFromCloud() {
@@ -884,15 +878,40 @@ setInterval(fetchNewLogs, 20000);
             } catch (e) { document.getElementById('sync-status').innerText = "☁️ TERPUTUS"; render(); }
         }
 
-        async function syncAll() {
-            render(); 
-            document.getElementById('sync-status').innerText = "⏳ MENYIMPAN...";
-            try {
-                await fetch(CLOUD_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ driver: DB_DRIVER, helper: DB_HELPER, transaksi: DB_TRANSAKSI, logs: DB_LOGS }) });
-                document.getElementById('sync-status').innerText = "☁️ TERHUBUNG";
-            } catch (e) { document.getElementById('sync-status').innerText = "⚠️ GAGAL SINKRON"; }
+       async function syncAll() {
+
+    const statusEl = document.getElementById('sync-status');
+    statusEl.innerText = "⏳ MENYIMPAN...";
+
+    try {
+
+        const response = await fetch(CLOUD_URL, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                driver: DB_DRIVER,
+                helper: DB_HELPER,
+                transaksi: DB_TRANSAKSI,
+                logs: DB_LOGS
+            })
+        });
+
+        const result = await response.json();
+        console.log(result);
+
+        if (result.result === "success") {
+            statusEl.innerText = "✅ TERSIMPAN";
+        } else {
+            statusEl.innerText = "⚠️ SERVER ERROR";
         }
 
+    } catch (err) {
+        console.error(err);
+        statusEl.innerText = "❌ GAGAL SYNC";
+    }
+}
         function addLog(aksi, ket) {
     const d = new Date(), pad = (n) => n.toString().padStart(2, '0');
     // Format Waktu: DD/MM/YYYY HH.MM
@@ -1148,5 +1167,30 @@ setInterval(fetchNewLogs, 20000);
             loadFromCloud();
         };
     </script>
+    <!-- ================= MODAL PREVIEW RESTORE ================= -->
+<div class="modal fade" id="modalRestorePreview" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-body p-4">
+        <h6 class="fw-bold mb-3">PREVIEW BACKUP</h6>
+
+        <div id="restore-info"
+             class="small mb-3"
+             style="line-height:1.6"></div>
+
+        <div class="d-flex gap-2">
+          <button class="btn btn-dark w-100" data-bs-dismiss="modal">
+            BATAL
+          </button>
+          <button class="btn btn-success w-100"
+                  onclick="confirmRestore()">
+            RESTORE
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+    
 </body>
 </html>

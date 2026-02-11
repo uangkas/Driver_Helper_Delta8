@@ -893,16 +893,21 @@ async function syncAll() {
             logs: DB_LOGS
         }));
 
-        await fetch(CLOUD_URL, {
+        const res = await fetch(CLOUD_URL, {
             method: "POST",
             body: form
         });
 
-        statusEl.innerText = "✅ SYNC BERHASIL";
+        const text = await res.text(); // jangan pakai .json()
+
+        console.log("SERVER RESPONSE:", text);
+
+        statusEl.innerText = "☁️ TERHUBUNG";
 
     } catch (err) {
+
         console.error("SYNC ERROR:", err);
-        statusEl.innerText = "❌ GAGAL SYNC";
+        statusEl.innerText = "☁️ TERPUTUS";
     }
 }
         function addLog(aksi, ket) {

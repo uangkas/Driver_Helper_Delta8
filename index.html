@@ -594,7 +594,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        const CLOUD_URL = 'https://script.google.com/macros/s/AKfycbyI_RCShwml5-XNIXa2WnYg75RUJwn3RjWeDwUCJygIK2kszPddozjmJelvumlfUO2bdw/exec';
+        const CLOUD_URL = 'https://script.google.com/macros/s/AKfycbxhMM9lNziC8J47KyNRNZZNqHz7xYTeX9rbgeZCke1DQfQJ5KE6re8dhIDojirGKyuYUw/exec';
         const APP_PIN = "0000";
         let DB_DRIVER = [], DB_HELPER = [], DB_TRANSAKSI = [], DB_LOGS = [];
         let pendingAction = null,
@@ -878,37 +878,30 @@ setInterval(fetchNewLogs, 20000);
             } catch (e) { document.getElementById('sync-status').innerText = "☁️ TERPUTUS"; render(); }
         }
 
-       async function syncAll() {
+async function syncAll() {
 
     const statusEl = document.getElementById('sync-status');
     statusEl.innerText = "⏳ MENYIMPAN...";
 
     try {
 
-        const response = await fetch(CLOUD_URL, {
+        const form = new FormData();
+        form.append("data", JSON.stringify({
+            driver: DB_DRIVER,
+            helper: DB_HELPER,
+            transaksi: DB_TRANSAKSI,
+            logs: DB_LOGS
+        }));
+
+        await fetch(CLOUD_URL, {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                driver: DB_DRIVER,
-                helper: DB_HELPER,
-                transaksi: DB_TRANSAKSI,
-                logs: DB_LOGS
-            })
+            body: form
         });
 
-        const result = await response.json();
-        console.log(result);
-
-        if (result.result === "success") {
-            statusEl.innerText = "✅ TERSIMPAN";
-        } else {
-            statusEl.innerText = "⚠️ SERVER ERROR";
-        }
+        statusEl.innerText = "✅ SYNC BERHASIL";
 
     } catch (err) {
-        console.error(err);
+        console.error("SYNC ERROR:", err);
         statusEl.innerText = "❌ GAGAL SYNC";
     }
 }

@@ -13,18 +13,23 @@ const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage(function(payload) {
 
-  // tampilkan notifikasi
+  console.log("SW Background message:", payload);
+
+  // ===== TAMPILKAN NOTIF =====
   self.registration.showNotification(
-    payload.notification.title,
+    payload.notification?.title || "DELTA 8",
     {
-      body: payload.notification.body,
+      body: payload.notification?.body || "",
       icon: "/Driver_Helper_Delta8/icon.png",
-      data: payload.data
+      data: payload.data || {}
     }
   );
 
-  // 🔥 KIRIM PESAN KE HALAMAN
-  self.clients.matchAll().then(clients => {
+  // ===== 🔥 KIRIM PESAN KE SEMUA TAB AKTIF =====
+  self.clients.matchAll({
+    type: "window",
+    includeUncontrolled: true
+  }).then(clients => {
     clients.forEach(client => {
       client.postMessage(payload.data);
     });

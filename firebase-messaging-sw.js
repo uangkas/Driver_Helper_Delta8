@@ -15,17 +15,16 @@ messaging.onBackgroundMessage(function(payload) {
 
   console.log("SW Background message:", payload);
 
-  // ===== TAMPILKAN NOTIF =====
-  self.registration.showNotification(
-    payload.notification?.title || "DELTA 8",
-    {
-      body: payload.notification?.body || "",
-      icon: "/Driver_Helper_Delta8/icon.png",
-      data: payload.data || {}
-    }
-  );
+  const title = payload.notification?.title || "DELTA 8";
+  const options = {
+    body: payload.notification?.body || "",
+    icon: "icon.png",
+    data: payload.data || {}
+  };
 
-  // ===== 🔥 KIRIM PESAN KE SEMUA TAB AKTIF =====
+  self.registration.showNotification(title, options);
+
+  // Kirim ke semua tab aktif
   self.clients.matchAll({
     type: "window",
     includeUncontrolled: true

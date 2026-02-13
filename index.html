@@ -631,10 +631,12 @@ if ("serviceWorker" in navigator) {
   navigator.serviceWorker.addEventListener("message", (event) => {
 
     if (event.data?.action === "refresh") {
+      console.log("Realtime refresh triggered");
       loadFromCloud();
     }
 
   });
+
 
 }
 
@@ -671,6 +673,7 @@ async function initFCM() {
     console.error("FCM Error:", err);
   }
 }
+
 
 window.addEventListener("load", initFCM);
 

@@ -11,22 +11,40 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
+// ===== BACKGROUND MESSAGE =====
 messaging.onBackgroundMessage(function(payload) {
 
-  console.log("Background message:", payload);
-
-  const notificationTitle =
-    payload.notification?.title || "🔔 Notifikasi Baru";
-
+  const notificationTitle = payload.notification?.title || "DELTA 8";
   const notificationOptions = {
-    body: payload.notification?.body || "Ada update terbaru",
-    icon: '/icon.png',
+    body: payload.notification?.body || "",
+    icon: "/icon.png",
     data: payload.data || {}
   };
 
-  self.registration.showNotification(
-    notificationTitle,
-    notificationOptions
-  );
+  self.registration.showNotification(notificationTitle, notificationOptions);
+});
 
+// ===== CLICK NOTIFICATION =====
+self.addEventListener("notificationclick", function(event) {
+
+  event.notification.close();
+
+  event.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true })
+      .then(function(clientList) {
+
+        for (let i = 0; i < clientList.length; i++) {
+          const client = clientList[i];
+
+          if ("focus" in client) {
+            client.postMessage({ action: "refresh" });
+            return client.focus();
+          }
+        }
+
+        if (clients.openWindow) {
+          return clients.openWindow("/");
+        }
+      })
+  );
 });

@@ -614,6 +614,30 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
+// ================= REALTIME FOREGROUND =================
+messaging.onMessage((payload) => {
+
+  console.log("Realtime message:", payload);
+
+  if (payload?.data?.action === "refresh") {
+    loadFromCloud(); // refresh instant tanpa reload
+  }
+
+});
+
+// ================= TERIMA MESSAGE DARI SW =================
+if ("serviceWorker" in navigator) {
+
+  navigator.serviceWorker.addEventListener("message", (event) => {
+
+    if (event.data?.action === "refresh") {
+      loadFromCloud();
+    }
+
+  });
+
+}
+
 async function initFCM() {
 
   if (!("Notification" in window)) return;
@@ -634,21 +658,55 @@ async function initFCM() {
 
     console.log("FCM TOKEN:", token);
 
-    await fetch(CLOUD_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "save_token",
-        token: token
-      })
-    });
+    const form = new FormData();
+form.append("action", "save_token");
+form.append("token", token);
+
+await fetch(CLOUD_URL, {
+  method: "POST",
+  body: form
+});
 
   } catch (err) {
     console.error("FCM Error:", err);
   }
 }
 
+
+
 window.addEventListener("load", initFCM);
+
+// ===== REALTIME FOREGROUND LISTENER =====
+messaging.onMessage((payload) => {
+
+  console.log("Realtime message:", payload);
+
+  if (payload?.data?.action === "refresh") {
+    console.log("Trigger refresh UI");
+    loadFromCloud(); // reload data tanpa refresh halaman
+  }
+
+});
+// ===== LISTEN PUSH FOREGROUND =====
+messaging.onMessage(function(payload) {
+
+  console.log("Push diterima:", payload);
+
+  if (payload.data?.action === "refresh") {
+
+    // Reload data dari server
+    loadFromCloud();
+
+    // Optional: animasi status
+    const statusEl = document.getElementById('sync-status');
+    statusEl.innerText = "🔄 UPDATE DITERIMA";
+    
+    setTimeout(() => {
+      statusEl.innerText = "☁️ TERHUBUNG";
+    }, 2000);
+  }
+
+});
 
         const APP_PIN = "0000";
         let DB_DRIVER = [], DB_HELPER = [], DB_TRANSAKSI = [], DB_LOGS = [];
@@ -851,7 +909,7 @@ case 'edit_transaksi':
 
     try {
 
-        const res = await fetch(CLOUD_URL + "?action=read");
+        const res = await fetch(CLOUD_URL + "?action=read&t=" + Date.now());
         const data = await res.json();
 
         DB_DRIVER = data.driver || [];
@@ -1094,11 +1152,6 @@ document.addEventListener("DOMContentLoaded", () => {
         aksi: aksi.toUpperCase(), 
         ket: ket 
     });
-    // 🔔 Kirim push realtime
-  sendPush(
-    "DELTA 8 - " + aksi,
-    ket
-  );
 }
 
         function clearLogs() { new bootstrap.Modal('#modalKonfirmasiLog').show(); }

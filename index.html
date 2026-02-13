@@ -552,12 +552,12 @@
     </button>
 
     <!-- 🔄 TOMBOL RESTORE -->
-    <button class="btn-unduh-final"
-            style="background:#10b981"
-            onclick="askAuth('restore')">
-        ♻️ RESTORE DATA DARI BACKUP
-    </button>
-
+<button class="btn-unduh-final"
+        style="background:#10b981"
+        data-bs-toggle="modal"
+        data-bs-target="#modalRestorePreview">
+    ♻️ RESTORE DATA DARI BACKUP
+</button>
     <button class="btn-hapus-final" onclick="clearLogs()">
         HAPUS SEMUA LOG SISTEM
     </button>
@@ -592,24 +592,70 @@
     <div class="modal fade" id="modalKonfirmasiHapus" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-sm"><div class="modal-content"><div class="modal-body p-4 text-center"><div class="mb-3" style="font-size: 2rem;">⚠️</div><h6 class="fw-bold mb-4">Hapus data ini?</h6><div class="d-flex gap-2"><button type="button" class="btn btn-dark w-100" data-bs-dismiss="modal">BATAL</button><button type="button" class="btn btn-danger w-100" onclick="eksekusiHapus()">HAPUS</button></div></div></div></div></div>
     <div class="modal fade" id="modalKonfirmasiLog" tabindex="-1"><div class="modal-dialog modal-dialog-centered modal-sm"><div class="modal-content"><div class="modal-body p-4 text-center"><div class="mb-3" style="font-size: 2rem;">🗑️</div><h6 class="fw-bold mb-4">BERSIHKAN LOG?</h6><div class="d-flex gap-2"><button type="button" class="btn btn-dark w-100" data-bs-dismiss="modal">BATAL</button><button type="button" class="btn btn-danger w-100" onclick="eksekusiHapusLog()">HAPUS</button></div></div></div></div></div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        const CLOUD_URL = 'https://script.google.com/macros/s/AKfycbxhMM9lNziC8J47KyNRNZZNqHz7xYTeX9rbgeZCke1DQfQJ5KE6re8dhIDojirGKyuYUw/exec';
+   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<!-- FIREBASE SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
+
+<script>
+        const CLOUD_URL = 'https://script.google.com/macros/s/AKfycbzWmWbwEZyFJ64IYMSShhIRE_EI83JYOr1ZvAUEwVU_-iwtvB69_ZtQgGDENV4TenL36Q/exec';
+        
+        // ================= FIREBASE INIT =================
+const firebaseConfig = {
+  apiKey: "AIzaSyAWuaS0RpcxZ_gU0B_4DMmqetkYnKuvlYM",
+  authDomain: "webkas-843cb.firebaseapp.com",
+  projectId: "webkas-843cb",
+  storageBucket: "webkas-843cb.firebasestorage.app",
+  messagingSenderId: "290112385940",
+  appId: "1:290112385940:web:bf36abc7542b693334d581"
+};
+
+firebase.initializeApp(firebaseConfig);
+const messaging = firebase.messaging();
+
+async function initFCM() {
+
+  if (!("Notification" in window)) return;
+
+  const permission = await Notification.requestPermission();
+  if (permission !== "granted") return;
+
+  const registration = await navigator.serviceWorker.register(
+    "/firebase-messaging-sw.js"
+  );
+
+  try {
+
+    const token = await messaging.getToken({
+      vapidKey: "7Vxlf0c-a1lsi6xUm9hBZ3TYjGV6VEDgxKemBMp0vxY",
+      serviceWorkerRegistration: registration
+    });
+
+    console.log("FCM TOKEN:", token);
+
+    await fetch(CLOUD_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "save_token",
+        token: token
+      })
+    });
+
+  } catch (err) {
+    console.error("FCM Error:", err);
+  }
+}
+
+window.addEventListener("load", initFCM);
+
         const APP_PIN = "0000";
         let DB_DRIVER = [], DB_HELPER = [], DB_TRANSAKSI = [], DB_LOGS = [];
         let pendingAction = null,
     pendingParams = null,
     currentContext = { type: '', id: null, idx: null },
     restoreTarget = { year: null, month: null };
-        
-        // ==========================================
-// SISTEM LOG OTOMATIS DELTA 8 (ADMIN MANCUNG)
-// ==========================================
-
-/**
- * 
- * 1. Fungsi Generator Format Teks Log
- */
  
  function formatRupiah(n) {
     return 'Rp ' + Number(n).toLocaleString('id-ID');
@@ -668,77 +714,6 @@ case 'edit_transaksi':
             return 'Log tidak dikenal';
     }
 }
-
-// --- 1. REGISTRASI SERVICE WORKER ---
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js')
-        .then(() => console.log('Service Worker Active'))
-        .catch(err => console.error('Service Worker Error', err));
-}
-
-// Meminta Izin Notifikasi
-function askPermission() {
-    if ("Notification" in window && Notification.permission !== "granted") {
-        Notification.requestPermission();
-    }
-}
-window.addEventListener('DOMContentLoaded', askPermission);
-
-async function notifyUser(title, body) {
-    if (!('Notification' in window)) return;
-    
-    if (Notification.permission === 'granted') {
-        try {
-            const registration = await navigator.serviceWorker.ready;
-            
-            // PERBAIKAN: Gunakan timestamp agar tag selalu UNIK
-            // Ini memaksa HP menganggap setiap pesan adalah pesan baru
-            const uniqueTag = 'UangKAS-' + Date.now();
-
-            await registration.showNotification(title, {
-                body: body,
-                icon: 'https://cdn-icons-png.flaticon.com/512/1828/1828640.png',
-                badge: 'https://cdn-icons-png.flaticon.com/512/1828/1828640.png',
-                vibrate: [200, 100, 200],
-                tag: uniqueTag, // ID Unik
-                renotify: true,  // Paksa bunyi/getar meskipun aplikasi terbuka
-                requireInteraction: false 
-            });
-        } catch (err) {
-            console.error("Gagal kirim notif:", err);
-        }
-    }
-}
-
-// --- 3. LOGIKA POLLING DATABASE ---
-let lastSeenLogTime = null;
-
-async function fetchNewLogs() {
-    try {
-        // Tambahkan timestamp agar browser tidak mengambil data lama (cache)
-        const response = await fetch(`${CLOUD_URL}?action=read&t=${Date.now()}`, { cache: 'no-store' });
-        const data = await response.json();
-        const logs = data.logs || [];
-        
-        if (logs.length > 0) {
-            const topLog = logs[0];
-            if (lastSeenLogTime === null) {
-                lastSeenLogTime = topLog.time;
-                return;
-            }
-            if (topLog.time !== lastSeenLogTime) {
-                notifyUser(`UangKAS: ${topLog.aksi}`, `${topLog.editor}: ${topLog.ket}`);
-                lastSeenLogTime = topLog.time;
-            }
-        }
-    } catch (e) {
-        console.error("Auto-sync pause...");
-    }
-}
-
-
-// Cek data baru setiap 20 detik
-setInterval(fetchNewLogs, 20000);
 
         function pindahHalaman(idHal, btn) {
             document.querySelectorAll('.halaman-content').forEach(h => h.classList.remove('active'));
@@ -846,6 +821,7 @@ setInterval(fetchNewLogs, 20000);
                     DB_TRANSAKSI.splice(currentContext.idx, 1);
                 }
                 syncAll();
+            
             } else if (pendingAction === 'toggle') {
                 let p = (pendingParams.kat === 'Driver' ? DB_DRIVER : DB_HELPER).find(x => x.id == pendingParams.id);
                 if (!p.status[pendingParams.y]) p.status[pendingParams.y] = {};
@@ -854,6 +830,7 @@ setInterval(fetchNewLogs, 20000);
                 const mm = pendingParams.m.toString().padStart(2, '0');
                 addLog("Iuran", `${pendingParams.kat.toUpperCase()} - ${p.nama} - ${mm}/${pendingParams.y} - [${isLunas ? "✅ - LUNAS" : "❌ - BATAL"}]`);
                 syncAll();
+                
             }
             
             else if (pendingAction === 'restore') {
@@ -868,15 +845,31 @@ setInterval(fetchNewLogs, 20000);
         }
 
         async function loadFromCloud() {
-            document.getElementById('sync-status').innerText = "⏳ MEMUAT DATA...";
-            try {
-                const res = await fetch(CLOUD_URL + "?action=read"); 
-                const data = await res.json();
-                DB_DRIVER = data.driver || []; DB_HELPER = data.helper || []; DB_TRANSAKSI = data.transaksi || []; DB_LOGS = data.logs || [];
-                render(); 
-                document.getElementById('sync-status').innerText = "☁️ TERHUBUNG";
-            } catch (e) { document.getElementById('sync-status').innerText = "☁️ TERPUTUS"; render(); }
-        }
+
+    const statusEl = document.getElementById('sync-status');
+    statusEl.innerText = "⏳ MEMUAT DATA...";
+
+    try {
+
+        const res = await fetch(CLOUD_URL + "?action=read");
+        const data = await res.json();
+
+        DB_DRIVER = data.driver || [];
+        DB_HELPER = data.helper || [];
+        DB_TRANSAKSI = data.transaksi || [];
+        DB_LOGS = data.logs || [];
+
+        render();
+
+        statusEl.innerText = "☁️ TERHUBUNG";
+
+    } catch (err) {
+
+        console.error("LOAD ERROR:", err);
+        statusEl.innerText = "☁️ TERPUTUS";
+        render();
+    }
+}
 
 async function syncAll() {
 
@@ -898,11 +891,15 @@ async function syncAll() {
             body: form
         });
 
-        const text = await res.text(); // jangan pakai .json()
+        const result = await res.json();
 
-        console.log("SERVER RESPONSE:", text);
+        if (result.result === "success") {
 
-        statusEl.innerText = "☁️ TERHUBUNG";
+            await loadFromCloud(); // reload + auto set status
+
+        } else {
+            throw new Error(result.message);
+        }
 
     } catch (err) {
 
@@ -910,6 +907,181 @@ async function syncAll() {
         statusEl.innerText = "☁️ TERPUTUS";
     }
 }
+
+function initRestoreYear() {
+
+  const yearSelect = document.getElementById('restore-year');
+  if (!yearSelect) return;
+
+  const currentYear = new Date().getFullYear();
+
+  yearSelect.innerHTML = `<option value="">-- Pilih Tahun --</option>`;
+
+  for (let y = currentYear; y >= currentYear - 5; y--) {
+    const opt = document.createElement("option");
+    opt.value = y;
+    opt.textContent = y;
+    yearSelect.appendChild(opt);
+  }
+}
+
+document.addEventListener("DOMContentLoaded", initRestoreYear);
+
+async function previewRestore() {
+
+  const year  = document.getElementById('restore-year')?.value;
+  const month = document.getElementById('restore-month')?.value;
+
+  if (!year || !month) {
+    alert("Pilih tahun dan bulan dulu");
+    return;
+  }
+
+  restoreTarget.year  = year;
+  restoreTarget.month = month;
+
+  try {
+
+    const res = await fetch(
+      CLOUD_URL + `?action=preview&year=${year}&month=${month}`
+    );
+
+    const data = await res.json();
+
+    document.getElementById("restore-info").innerHTML = `
+      <div style="
+        font-size:15px;
+        line-height:1.8;
+        padding:10px 5px;
+      ">
+
+        <div style="
+          font-weight:700;
+          font-size:18px;
+          margin-bottom:12px;
+          text-align:center;
+        ">
+          📅 PERIODE ${data.periode}
+        </div>
+
+        <div style="display:flex; justify-content:space-between;">
+          <span>👥 Driver</span>
+          <b>${data.total_driver}</b>
+        </div>
+
+        <div style="display:flex; justify-content:space-between;">
+          <span>👷 Helper</span>
+          <b>${data.total_helper}</b>
+        </div>
+
+        <div style="display:flex; justify-content:space-between;">
+          <span>📄 Transaksi</span>
+          <b>${data.total_transaksi}</b>
+        </div>
+
+        <div style="display:flex; justify-content:space-between;">
+          <span>📝 Log</span>
+          <b>${data.total_log}</b>
+        </div>
+
+        <hr style="margin:14px 0;">
+
+        <div style="
+          display:flex;
+          justify-content:space-between;
+          color:#16a34a;
+        ">
+          <span>💰 Pemasukan</span>
+          <b>Rp ${Number(data.pemasukan).toLocaleString()}</b>
+        </div>
+
+        <div style="
+          display:flex;
+          justify-content:space-between;
+          color:#dc2626;
+        ">
+          <span>💸 Pengeluaran</span>
+          <b>Rp ${Number(data.pengeluaran).toLocaleString()}</b>
+        </div>
+
+        <div style="
+          display:flex;
+          justify-content:space-between;
+          font-size:20px;
+          font-weight:700;
+          margin-top:12px;
+        ">
+          <span>🟢 Saldo</span>
+          <span style="
+            color:${data.saldo >= 0 ? '#16a34a' : '#dc2626'};
+          ">
+            Rp ${Number(data.saldo).toLocaleString()}
+          </span>
+        </div>
+
+      </div>
+    `;
+
+    const modal = new bootstrap.Modal(
+      document.getElementById('modalRestorePreview')
+    );
+
+    modal.show();
+
+  } catch (err) {
+
+    alert("Backup tidak ditemukan / error");
+    console.error(err);
+
+  }
+}
+async function confirmRestore() {
+
+  if (!restoreTarget.year || !restoreTarget.month) {
+    alert("Preview belum valid");
+    return;
+  }
+
+  try {
+
+    const res = await fetch(
+      CLOUD_URL + `?action=restore&year=${restoreTarget.year}&month=${restoreTarget.month}`
+    );
+
+    const result = await res.json();
+
+    if (result.result === "success") {
+
+      alert("Restore berhasil");
+      location.reload();
+
+    } else {
+      throw new Error(result.message || "Restore gagal");
+    }
+
+  } catch (err) {
+
+    alert("Restore gagal");
+    console.error(err);
+
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+
+  const yearEl  = document.getElementById('restore-year');
+  const monthEl = document.getElementById('restore-month');
+
+  if (yearEl) {
+    yearEl.addEventListener("change", previewRestore);
+  }
+
+  if (monthEl) {
+    monthEl.addEventListener("change", previewRestore);
+  }
+
+});
+
         function addLog(aksi, ket) {
     const d = new Date(), pad = (n) => n.toString().padStart(2, '0');
     // Format Waktu: DD/MM/YYYY HH.MM
@@ -922,6 +1094,11 @@ async function syncAll() {
         aksi: aksi.toUpperCase(), 
         ket: ket 
     });
+    // 🔔 Kirim push realtime
+  sendPush(
+    "DELTA 8 - " + aksi,
+    ket
+  );
 }
 
         function clearLogs() { new bootstrap.Modal('#modalKonfirmasiLog').show(); }
@@ -1159,11 +1336,13 @@ async function syncAll() {
             setTheme(localStorage.getItem('delta8_theme') || 'luxury');
             const sm = document.getElementById('selMonth'), sy = document.getElementById('selYear'), now = new Date();
             const nm = ["", "Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
-            sm.innerHTML = `<option value="all">SEMUA BULAN (ALL)</option>`;
+            sm.innerHTML = `<option value="all">SEMUA BULAN</option>`;
             for (let i = 1; i <= 12; i++) sm.innerHTML += `<option value="${i}" ${i === (now.getMonth() + 1) ? 'selected' : ''}>${nm[i]}</option>`;
             for (let i = 2024; i <= 2050; i++) sy.innerHTML += `<option value="${i}" ${i === now.getFullYear() ? 'selected' : ''}>${i}</option>`;
             loadFromCloud();
         };
+        
+       
     </script>
     <!-- ================= MODAL PREVIEW RESTORE ================= -->
 <div class="modal fade" id="modalRestorePreview" tabindex="-1">
@@ -1171,6 +1350,32 @@ async function syncAll() {
     <div class="modal-content">
       <div class="modal-body p-4">
         <h6 class="fw-bold mb-3">PREVIEW BACKUP</h6>
+        <!-- ================= PILIH PERIODE BACKUP ================= -->
+<div class="mb-3">
+  <label class="form-label small fw-bold">Pilih Tahun</label>
+  <select id="restore-year" class="form-select">
+    <option value="">-- Pilih Tahun --</option>
+  </select>
+</div>
+
+<div class="mb-3">
+  <label class="form-label small fw-bold">Pilih Bulan</label>
+  <select id="restore-month" class="form-select">
+    <option value="">-- Pilih Bulan --</option>
+    <option value="1">Januari</option>
+    <option value="2">Februari</option>
+    <option value="3">Maret</option>
+    <option value="4">April</option>
+    <option value="5">Mei</option>
+    <option value="6">Juni</option>
+    <option value="7">Juli</option>
+    <option value="8">Agustus</option>
+    <option value="9">September</option>
+    <option value="10">Oktober</option>
+    <option value="11">November</option>
+    <option value="12">Desember</option>
+  </select>
+</div>
 
         <div id="restore-info"
              class="small mb-3"
@@ -1189,6 +1394,5 @@ async function syncAll() {
     </div>
   </div>
 </div>
-    
 </body>
 </html>

@@ -638,7 +638,7 @@ if ("serviceWorker" in navigator) {
 
 }
 
-async function initFCM() {
+asyncasync function initFCM() {
 
   if (!("Notification" in window)) return;
 
@@ -646,7 +646,7 @@ async function initFCM() {
   if (permission !== "granted") return;
 
   const registration = await navigator.serviceWorker.register(
-    "/firebase-messaging-sw.js"
+    "./firebase-messaging-sw.js"
   );
 
   try {
@@ -658,21 +658,19 @@ async function initFCM() {
 
     console.log("FCM TOKEN:", token);
 
-    const form = new FormData();
-form.append("action", "save_token");
-form.append("token", token);
-
-await fetch(CLOUD_URL, {
-  method: "POST",
-  body: form
-});
+    await fetch(CLOUD_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "save_token",
+        token: token
+      })
+    });
 
   } catch (err) {
     console.error("FCM Error:", err);
   }
 }
-
-
 
 window.addEventListener("load", initFCM);
 

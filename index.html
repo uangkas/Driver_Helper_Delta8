@@ -685,6 +685,10 @@ async function initFCM() {
     const registration = await navigator.serviceWorker.register(
       "./firebase-messaging-sw.js"
     );
+    
+    if (!navigator.serviceWorker.controller) {
+  window.location.reload();
+}
 
     console.log("SW registered");
 
@@ -837,7 +841,7 @@ case 'edit_transaksi':
             setTimeout(executeAction, 300);
         }
 
-        function executeAction() {
+      async  function executeAction() {
             if (pendingAction === 'tambah') { 
                 document.getElementById('fAdd').reset(); 
                 document.getElementById('editMemberId').value = ""; 
@@ -879,18 +883,30 @@ case 'edit_transaksi':
                     addLog("Hapus transaksi", `TRANSAKSI - ${t.tp.toUpperCase()} - ${t.p} - ${t.k || '-'}`);
                     DB_TRANSAKSI.splice(currentContext.idx, 1);
                 }
-                syncAll();
+                await syncAll();
+await loadFromCloud();
             
             } else if (pendingAction === 'toggle') {
-                let p = (pendingParams.kat === 'Driver' ? DB_DRIVER : DB_HELPER).find(x => x.id == pendingParams.id);
-                if (!p.status[pendingParams.y]) p.status[pendingParams.y] = {};
-                p.status[pendingParams.y][pendingParams.m] = !p.status[pendingParams.y][pendingParams.m];
-                const isLunas = p.status[pendingParams.y][pendingParams.m];
-                const mm = pendingParams.m.toString().padStart(2, '0');
-                addLog("Iuran", `${pendingParams.kat.toUpperCase()} - ${p.nama} - ${mm}/${pendingParams.y} - [${isLunas ? "✅ - LUNAS" : "❌ - BATAL"}]`);
-                syncAll();
-                
-            }
+let p = (pendingParams.kat === 'Driver' ? DB_DRIVER : DB_HELPER)
+  .find(x => x.id == pendingParams.id);
+
+if (!p.status) p.status = {};
+if (!p.status[pendingParams.y]) {
+  p.status[pendingParams.y] = {};
+}
+
+p.status[pendingParams.y][pendingParams.m] =
+  !p.status[pendingParams.y][pendingParams.m];
+  const isLunas = p.status[pendingParams.y][pendingParams.m];
+  const mm = pendingParams.m.toString().padStart(2, '0');
+
+  addLog("IURAN",
+    `${pendingParams.kat.toUpperCase()} - ${p.nama} - ${mm}/${pendingParams.y} - [${isLunas ? "✅ - LUNAS" : "❌ - BATAL"}]`
+  );
+
+  await syncAll();
+  await loadFromCloud();   // 🔥 PAKSA REFRESH DARI SERVER
+}
             
             else if (pendingAction === 'restore') {
     const y = document.getElementById('selYear').value;
@@ -961,8 +977,8 @@ async function syncAll() {
         }
 
         console.log("SYNC SUCCESS");
-        statusEl.innerText = "☁️ TERHUBUNG";
-
+render(); // 🔥 paksa refresh UI lokal
+statusEl.innerText = "☁️ TERHUBUNG";
     } catch (err) {
 
         console.error("SYNC ERROR:", err);

@@ -600,7 +600,7 @@
 
 <script>
         const CLOUD_URL = 'https://script.google.com/macros/s/AKfycbwO4pJ4BP_oIBu_tV-7rxs6FOvFyU8aCAaZMgUmHGZ2AWm6g-B0LHFsbYQ33milVW7Gxw/exec';
-        
+        console.log("SCRIPT LOADED");
         // ================= FIREBASE INIT =================
 const firebaseConfig = {
   apiKey: "AIzaSyAWuaS0RpcxZ_gU0B_4DMmqetkYnKuvlYM",
@@ -1381,6 +1381,11 @@ document.addEventListener("DOMContentLoaded", () => {
             for (let i = 2024; i <= 2050; i++) sy.innerHTML += `<option value="${i}" ${i === now.getFullYear() ? 'selected' : ''}>${i}</option>`;
             loadFromCloud();
         };
+        
+        document.addEventListener("DOMContentLoaded", () => {
+  console.log("DOM READY");
+  initFCM();
+});
         
        
     </script>

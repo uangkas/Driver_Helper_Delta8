@@ -599,7 +599,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
 
 <script>
-        const CLOUD_URL = 'https://script.google.com/macros/s/AKfycbwO4pJ4BP_oIBu_tV-7rxs6FOvFyU8aCAaZMgUmHGZ2AWm6g-B0LHFsbYQ33milVW7Gxw/exec';
+        const CLOUD_URL = 'https://script.google.com/macros/s/AKfycbyIsoq50pACUzx1TFAswg3rJyP1yRlYXKS_XN9wHQ_tGIn5X54C6GQh6zxsO2Z3q-C-iA/exec';
         console.log("SCRIPT LOADED");
         // ================= FIREBASE INIT =================
 const firebaseConfig = {
@@ -682,16 +682,15 @@ async function initFCM() {
 
     console.log("FCM TOKEN:", token);
 
-    const res = await fetch(CLOUD_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "save_token",
-        token: token
-      })
-    });
+ // ===== SIMPAN TOKEN VIA GET =====
+const saveUrl = CLOUD_URL 
+  + "?action=save_token"
+  + "&token=" + encodeURIComponent(token);
 
-    console.log("SAVE TOKEN RESPONSE:", await res.text());
+const res = await fetch(saveUrl);
+const text = await res.text();
+
+console.log("SAVE TOKEN RESPONSE:", text);
 
   } catch (err) {
     console.error("FCM ERROR:", err);

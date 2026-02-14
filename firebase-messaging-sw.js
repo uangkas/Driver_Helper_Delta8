@@ -15,16 +15,15 @@ messaging.onBackgroundMessage(function(payload) {
 
   console.log("SW Background message:", payload);
 
-  const title = payload.notification?.title || "DELTA 8";
+  const title = payload.data?.title || "DELTA 8";
   const options = {
-    body: payload.notification?.body || "",
+    body: payload.data?.body || "",
     icon: "icon.png",
     data: payload.data || {}
   };
 
   self.registration.showNotification(title, options);
 
-  // Kirim ke semua tab aktif
   self.clients.matchAll({
     type: "window",
     includeUncontrolled: true

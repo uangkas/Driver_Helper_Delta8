@@ -659,6 +659,8 @@ async function initFCM() {
     console.log("Notification tidak support");
     return;
   }
+  
+  alert("Requesting notification permission...");
 
   const permission = await Notification.requestPermission();
   console.log("Permission:", permission);

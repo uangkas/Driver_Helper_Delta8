@@ -898,8 +898,19 @@ case 'edit_transaksi':
 
     try {
 
-        const res = await fetch(CLOUD_URL + "?action=read&t=" + Date.now());
-        const data = await res.json();
+       const res = await fetch(
+  CLOUD_URL
+  + "?action=read"
+  + "&key=DRIVER_HELPER_DELTA8"
+  + "&t=" + Date.now()
+);
+
+const data = await res.json();
+
+if (data.error) {
+  console.log("READ ERROR:", data);
+  return;
+}
 
         DB_DRIVER = data.driver || [];
         DB_HELPER = data.helper || [];
@@ -933,24 +944,22 @@ async function syncAll() {
             logs: DB_LOGS
         }));
 
-        const res = await fetch(CLOUD_URL, {
-            method: "POST",
-            body: form
-        });
+        const res = await fetch(
+  CLOUD_URL + "?key=DRIVER_HELPER_DELTA8",
+  {
+    method: "POST",
+    body: form
+  }
+);
 
-        const result = await res.json();
+const result = await res.json();
 
-        if (result.result === "success") {
+if (result.result !== "success") {
+  console.log("SYNC ERROR:", result);
+  throw new Error(result.message || "Sync gagal");
+}
 
-            await loadFromCloud(); // reload + auto set status
-
-        } else {
-            throw new Error(result.message);
-        }
-
-    } catch (err) {
-
-        console.error("SYNC ERROR:", err);
+console.log("SYNC SUCCESS");
         statusEl.innerText = "☁️ TERPUTUS";
     }
 }

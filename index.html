@@ -660,8 +660,7 @@ async function initFCM() {
     return;
   }
   
-  alert("Requesting notification permission...");
-
+ 
   const permission = await Notification.requestPermission();
   console.log("Permission:", permission);
 
@@ -682,10 +681,12 @@ async function initFCM() {
 
     console.log("FCM TOKEN:", token);
 
- // ===== SIMPAN TOKEN VIA GET =====
-const saveUrl = CLOUD_URL 
+ 
+// ===== SIMPAN TOKEN VIA GET =====
+const saveUrl = CLOUD_URL
   + "?action=save_token"
-  + "&token=" + encodeURIComponent(token);
+  + "&token=" + encodeURIComponent(token)
+  + "&key=DRIVER_HELPER_DELTA8";
 
 const res = await fetch(saveUrl);
 const text = await res.text();

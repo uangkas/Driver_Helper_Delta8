@@ -600,6 +600,7 @@
 
 <script>
         const CLOUD_URL = 'https://script.google.com/macros/s/AKfycbxZjli_V8kGmjcBnrkrF_Gy4rHRLRIW80wHsMbJMV0aeB3NgmRP5OVJXJw0ghofHCpBfg/exec';
+        
     
         // ================= FIREBASE INIT =================
 const firebaseConfig = {
@@ -651,6 +652,10 @@ if ("serviceWorker" in navigator) {
 
 }
 
+function apiUrl(params = "") {
+  return CLOUD_URL + params + "&key=DRIVER_HELPER_DELTA8";
+}
+
 async function initFCM() {
 
   console.log("INIT FCM START");
@@ -683,12 +688,10 @@ async function initFCM() {
 
  
 // ===== SIMPAN TOKEN VIA GET =====
-const saveUrl = CLOUD_URL
-  + "?action=save_token"
-  + "&token=" + encodeURIComponent(token)
-  + "&key=DRIVER_HELPER_DELTA8";
+const res = await fetch(
+  apiUrl("?action=save_token&token=" + encodeURIComponent(token))
+);
 
-const res = await fetch(saveUrl);
 const text = await res.text();
 
 console.log("SAVE TOKEN RESPONSE:", text);
@@ -898,12 +901,7 @@ case 'edit_transaksi':
 
     try {
 
-       const res = await fetch(
-  CLOUD_URL
-  + "?action=read"
-  + "&key=DRIVER_HELPER_DELTA8"
-  + "&t=" + Date.now()
-);
+       const res = await fetch(apiUrl("?action=read&t=" + Date.now()));
 
 const data = await res.json();
 
@@ -944,13 +942,7 @@ async function syncAll() {
             logs: DB_LOGS
         }));
 
-        const res = await fetch(
-            CLOUD_URL + "?key=DRIVER_HELPER_DELTA8",
-            {
-                method: "POST",
-                body: form
-            }
-        );
+        const res = await fetch(apiUrl(""), { method: "POST", body: form });
 
         const result = await res.json();
 
@@ -1005,8 +997,8 @@ async function previewRestore() {
   try {
 
     const res = await fetch(
-      CLOUD_URL + `?action=preview&year=${year}&month=${month}`
-    );
+  apiUrl(`?action=preview&year=${year}&month=${month}`)
+);
 
     const data = await res.json();
 
@@ -1106,9 +1098,9 @@ async function confirmRestore() {
 
   try {
 
-    const res = await fetch(
-      CLOUD_URL + `?action=restore&year=${restoreTarget.year}&month=${restoreTarget.month}`
-    );
+   const res = await fetch(
+  apiUrl(`?action=restore&year=${restoreTarget.year}&month=${restoreTarget.month}`)
+);
 
     const result = await res.json();
 

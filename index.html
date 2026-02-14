@@ -653,7 +653,16 @@ if ("serviceWorker" in navigator) {
 }
 
 function apiUrl(params = "") {
-  return CLOUD_URL + params + "&key=DRIVER_HELPER_DELTA8";
+
+  if (!params) {
+    return CLOUD_URL + "?key=DRIVER_HELPER_DELTA8";
+  }
+
+  if (params.startsWith("?")) {
+    return CLOUD_URL + params + "&key=DRIVER_HELPER_DELTA8";
+  }
+
+  return CLOUD_URL + "?" + params + "&key=DRIVER_HELPER_DELTA8";
 }
 
 async function initFCM() {

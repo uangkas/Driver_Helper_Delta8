@@ -966,23 +966,22 @@ async function syncAll() {
       logs: DB_LOGS
     };
 
-    console.log("SYNC PAYLOAD:", payload); // debug
+    console.log("SYNC PAYLOAD:", payload);
 
     const res = await fetch(apiUrl(""), {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload)   // ⬅️ TANPA headers
     });
 
-    const result = await res.json();
+    const text = await res.text();
+    console.log("SYNC RESPONSE:", text);
 
+    const result = JSON.parse(text);
     if (result.result !== "success") {
       throw new Error(result.message || "Sync gagal");
     }
 
-    // 🔥 PENTING
-    DB_LOGS = [];   // bersihkan log lokal setelah sukses
-
+    DB_LOGS = []; // 🔥 penting
     statusEl.innerText = "☁️ TERHUBUNG";
     render();
 

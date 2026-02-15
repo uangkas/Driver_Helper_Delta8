@@ -13,19 +13,17 @@ const messaging = firebase.messaging();
 
 messaging.onBackgroundMessage(function(payload) {
 
-  // ⚠️ JANGAN tampilkan notifikasi di Service Worker
-  // Backend (GAS asyncPush) sudah kirim FCM notification
+  // 🚨 JIKA FCM SUDAH BAWA notification → JANGAN DUPLIKASI
+  if (payload.notification) {
+    return;
+  }
 
-  console.log("SW Background message (no notify):", payload);
+  // 🔁 FALLBACK (jika hanya data payload)
+  const title = payload.data?.title || "DELTA 8";
+  const options = {
+    body: payload.data?.body || "",
+    icon: "icon.png"
+  };
 
-  // Optional: kirim data ke halaman aktif (tanpa notif)
-  self.clients.matchAll({
-    type: "window",
-    includeUncontrolled: true
-  }).then(clients => {
-    clients.forEach(client => {
-      client.postMessage(payload.data || {});
-    });
-  });
-
+  self.registration.showNotification(title, options);
 });

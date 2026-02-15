@@ -954,37 +954,42 @@ if (data.error) {
 
 async function syncAll() {
 
-    const statusEl = document.getElementById('sync-status');
-    statusEl.innerText = "⏳ MENYIMPAN...";
+  const statusEl = document.getElementById('sync-status');
+  statusEl.innerText = "⏳ MENYIMPAN...";
 
-    try {
+  try {
 
-        const form = new FormData();
-        form.append("data", JSON.stringify({
-            driver: DB_DRIVER,
-            helper: DB_HELPER,
-            transaksi: DB_TRANSAKSI,
-            logs: DB_LOGS
-        }));
+    const payload = {
+      driver: DB_DRIVER,
+      helper: DB_HELPER,
+      transaksi: DB_TRANSAKSI,
+      logs: DB_LOGS
+    };
 
-        const res = await fetch(apiUrl(""), { method: "POST", body: form });
+    console.log("SYNC PAYLOAD:", payload); // debug
 
-        const result = await res.json();
+    const res = await fetch(apiUrl(""), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
 
-        if (result.result !== "success") {
-            console.log("SYNC ERROR:", result);
-            throw new Error(result.message || "Sync gagal");
-        }
+    const result = await res.json();
 
-        console.log("SYNC SUCCESS");
-render(); // 🔥 paksa refresh UI lokal
-statusEl.innerText = "☁️ TERHUBUNG";
-    } catch (err) {
-
-        console.error("SYNC ERROR:", err);
-        statusEl.innerText = "☁️ TERPUTUS";
-
+    if (result.result !== "success") {
+      throw new Error(result.message || "Sync gagal");
     }
+
+    // 🔥 PENTING
+    DB_LOGS = [];   // bersihkan log lokal setelah sukses
+
+    statusEl.innerText = "☁️ TERHUBUNG";
+    render();
+
+  } catch (err) {
+    console.error("SYNC ERROR:", err);
+    statusEl.innerText = "☁️ TERPUTUS";
+  }
 }
 
 function initRestoreYear() {

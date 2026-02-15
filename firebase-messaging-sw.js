@@ -10,20 +10,3 @@ firebase.initializeApp({
 });
 
 const messaging = firebase.messaging();
-
-messaging.onBackgroundMessage(function(payload) {
-
-  // 🚨 JIKA FCM SUDAH BAWA notification → JANGAN DUPLIKASI
-  if (payload.notification) {
-    return;
-  }
-
-  // 🔁 FALLBACK (jika hanya data payload)
-  const title = payload.data?.title || "DELTA 8";
-  const options = {
-    body: payload.data?.body || "",
-    icon: "icon.png"
-  };
-
-  self.registration.showNotification(title, options);
-});

@@ -1213,16 +1213,26 @@ document.addEventListener("DOMContentLoaded", () => {
         function clearLogs() { new bootstrap.Modal('#modalKonfirmasiLog').show(); }
         async function eksekusiHapusLog() {
 
-  bootstrap.Modal.getInstance('#modalKonfirmasiLog').hide();
+  const editor = document.getElementById("inputLogEditor").value.trim().toUpperCase();
+  const pin    = document.getElementById("inputLogPin").value;
 
-  const editor = localStorage.getItem('delta8_editor') || '';
+  if (editor.length < 2) {
+    alert("Nama editor wajib diisi");
+    return;
+  }
+
+  if (pin.length !== 4) {
+    alert("PIN tidak valid");
+    return;
+  }
 
   const res = await fetch(apiUrl(""), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       action: "delete_logs_by_editor",
-      editor: editor
+      editor: editor,
+      pin: pin
     })
   });
 
@@ -1230,10 +1240,10 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (result.result === "success") {
     DB_LOGS = [];
-    await loadFromCloud(); // 🔥 WAJIB
+    await loadFromCloud();
     alert("Log berhasil dihapus");
   } else {
-    alert("Gagal hapus log");
+    alert(result.message || "Gagal hapus log");
   }
 }
         function render() {

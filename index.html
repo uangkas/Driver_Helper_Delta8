@@ -630,8 +630,9 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
 
 <script>
-        const CLOUD_URL = 'https://script.google.com/macros/s/AKfycbzZzfimuYyfMIV_eDS2FP8DC1cz1ZzahNnsD8EgY6ZwRfZnwkC7rmjhEbObP1GaoN1KCQ/exec';
-        
+        const CLOUD_URL = "https://script.google.com/macros/s/AKfycbzZzfimuYyfMIV_eDS2FP8DC1cz1ZzahNnsD8EgY6ZwRfZnwkC7rmjhEbObP1GaoN1KCQ/exec";
+const API_KEY   = "DRIVER_HELPER_DELTA8";
+
     
         // ================= FIREBASE INIT =================
 const firebaseConfig = {
@@ -1216,16 +1217,10 @@ document.addEventListener("DOMContentLoaded", () => {
     
         async function eksekusiHapusLog() {
 
-  const editor = document
-    .getElementById("inputLogEditor")
-    .value
-    .trim()
-    .toUpperCase();
-
-  const pin = document
-    .getElementById("inputLogPin")
-    .value
-    .trim();
+  const editor = document.getElementById("inputLogEditor")
+    .value.trim().toUpperCase();
+  const pin = document.getElementById("inputLogPin")
+    .value.trim();
 
   if (editor.length < 2) {
     alert("Nama editor wajib diisi");
@@ -1237,34 +1232,32 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
-  // 🔥 WAJIB ADA KEY DI URL
-  
-  const API_KEY = "DRIVER_HELPER_DELTA8";
-
   try {
-    const res = await fetch(`${CLOUD_URL}?key=${API_KEY}`, {
+    const res = await fetch(apiUrl(), {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
       body: JSON.stringify({
         action: "delete_logs_by_editor",
-        editor: editor,
-        pin: pin
+        editor,
+        pin
       })
+      // ⛔ JANGAN TAMBAH headers
     });
 
-    const json = await res.json();
+    const text = await res.text();
+    console.log("RAW:", text);
+
+    const json = JSON.parse(text);
 
     if (json.result === "success") {
-      alert(`✅ Log dihapus: ${json.deleted} baris`);
+      alert(`✅ Log dihapus: ${json.deleted}`);
+      await loadFromCloud();
     } else {
-      alert(`❌ ${json.message || "Gagal hapus log"}`);
+      alert(`❌ ${json.message}`);
     }
 
   } catch (err) {
     console.error(err);
-    alert("❌ Koneksi ke server gagal");
+    alert("❌ Network error (request tidak sampai GAS)");
   }
 }
         function render() {

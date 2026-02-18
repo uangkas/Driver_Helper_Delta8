@@ -649,25 +649,6 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const messaging = firebase.messaging();
 
-// ================= FOREGROUND MESSAGE =================
-messaging.onMessage((payload) => {
-
-  console.log("Push diterima (foreground):", payload);
-
-  if (payload?.data?.action === "refresh") {
-
-    loadFromCloud();
-
-    const statusEl = document.getElementById('sync-status');
-    if (statusEl) {
-      statusEl.innerText = "🔄 UPDATE DITERIMA";
-      setTimeout(() => {
-        statusEl.innerText = "☁️ TERHUBUNG";
-      }, 2000);
-    }
-  }
-});
-
 
 // ================= TERIMA MESSAGE DARI SW =================
 // 🔥 TERIMA PESAN DARI SERVICE WORKER
@@ -717,9 +698,9 @@ async function initFCM() {
   try {
 
     const registration = await navigator.serviceWorker.register(
-      "./firebase-messaging-sw.js"
-    );
-    
+  "/Driver_Helper_Delta8/firebase-messaging-sw.js",
+  { scope: "/Driver_Helper_Delta8/" }
+);
     if (!navigator.serviceWorker.controller) {
   window.location.reload();
 }

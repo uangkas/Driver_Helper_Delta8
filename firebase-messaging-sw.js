@@ -24,8 +24,8 @@ messaging.onBackgroundMessage((payload) => {
 
   self.registration.showNotification(title, {
     body,
-    icon: '/Driver_Helper_Delta8/icon-192.png',
-    badge: '/Driver_Helper_Delta8/icon-192.png',
+    icon: '/Driver_Helper_Delta8/icon.png',
+    badge: '/Driver_Helper_Delta8/icon.png',
 
     // 🔒 HARD LOCK
     tag: 'delta8-final-lock',

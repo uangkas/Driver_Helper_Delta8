@@ -630,7 +630,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-messaging-compat.js"></script>
 
 <script>
-        const CLOUD_URL = "https://script.google.com/macros/s/AKfycbwCq6Ta82DO9mEzISI2DlO0BNlTx14w7xd5x1VZrjwbnvHtonfmQM0ZcyojRoswZDh-Ug/exec";
+        const CLOUD_URL = "https://script.google.com/macros/s/AKfycbxLVQJa4it4x391Qojq7gJ8kQvIlYXb1YgHwSWQz7Fng4FGCJvaTIeBv72kwMsBJ9pG9Q/exec";
         
         
 const API_KEY   = "DRIVER_HELPER_DELTA8";
@@ -680,54 +680,62 @@ function apiUrl(params = "") {
   return CLOUD_URL + "?" + params + "&key=DRIVER_HELPER_DELTA8";
 }
 
-async function initFCM() {
+function bindNotifPermissionGesture() {
 
-  console.log("INIT FCM START");
-
-  if (!("Notification" in window)) {
-    console.log("Notification tidak support");
+  if (isNotifGranted()) {
+    // 🔥 LANGSUNG AUTO INIT
+    initFCM();
     return;
   }
-  
- 
-  const permission = await Notification.requestPermission();
-  console.log("Permission:", permission);
 
+  const handler = async () => {
+    document.removeEventListener('click', handler);
+    document.removeEventListener('touchstart', handler);
+
+    console.log('GESTURE OK → REQUEST PERMISSION');
+
+    const result = await Notification.requestPermission();
+    console.log('Permission:', result);
+
+    if (result === 'granted') {
+      initFCM(); // 🔒 SETELAH INI AUTO SELAMANYA
+    }
+  };
+
+  document.addEventListener('click', handler, { once: true });
+  document.addEventListener('touchstart', handler, { once: true });
+}
+
+async function initFCM() {
+
+  // 1️⃣ WAJIB 1 GESTURE USER (aturan browser)
+  // Gesture = load halaman pertama kali + tap layar
+  // Browser menganggap ini valid karena dipanggil DOMContentLoaded
+
+  if (!("Notification" in window)) return;
+
+  const permission = await Notification.requestPermission();
   if (permission !== "granted") return;
 
-  try {
+  // 2️⃣ REGISTER SW (SATU KALI)
+  const registration = await navigator.serviceWorker.register(
+    "./firebase-messaging-sw.js"
+  );
 
-    const registration = await navigator.serviceWorker.register(
-  "/Driver_Helper_Delta8/firebase-messaging-sw.js",
-  { scope: "/Driver_Helper_Delta8/" }
-);
-    if (!navigator.serviceWorker.controller) {
-  window.location.reload();
+  // 3️⃣ AMBIL TOKEN (AUTO & STABIL)
+  const token = await messaging.getToken({
+    vapidKey: "BKA9WuJ7CVqbKMSPvGbFcbjpbCKWLcLKfuZF6nRW_FfBNUmRULj5Q30MKYOMUFZP7kZBAyl018E_DDMJq4kc1Q4",
+    serviceWorkerRegistration: registration
+  });
+
+  if (!token) return;
+
+  // 4️⃣ SIMPAN TOKEN KE GAS
+  fetch(
+    apiUrl("?action=save_token&token=" + encodeURIComponent(token))
+  ).catch(() => {});
 }
 
-    console.log("SW registered");
-
-    const token = await messaging.getToken({
-  vapidKey: "BKA9WuJ7CVqbKMSPvGbFcbjpbCKWLcLKfuZF6nRW_FfBNUmRULj5Q30MKYOMUFZP7kZBAyl018E_DDMJq4kc1Q4",
-  serviceWorkerRegistration: registration
-});
-
-    console.log("FCM TOKEN:", token);
-
- 
-// ===== SIMPAN TOKEN VIA GET =====
-const res = await fetch(
-  apiUrl("?action=save_token&token=" + encodeURIComponent(token))
-);
-
-const text = await res.text();
-
-console.log("SAVE TOKEN RESPONSE:", text);
-
-  } catch (err) {
-    console.error("FCM ERROR:", err);
-  }
-}
         const APP_PIN = "0000";
         let DB_DRIVER = [], DB_HELPER = [], DB_TRANSAKSI = [], DB_LOGS = [];
         let pendingAction = null,
@@ -1483,7 +1491,6 @@ document.addEventListener("DOMContentLoaded", () => {
   console.log("DOM READY");
   initFCM();
 });
-        
        
     </script>
     <!-- ================= MODAL PREVIEW RESTORE ================= -->
